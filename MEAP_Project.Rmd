@@ -1,0 +1,2832 @@
+---
+title: "MEAP Project"
+author: "Shiyu Murashima"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Loading in Application Data
+```{r}
+apps <- read.csv("Copy of MEAP Program Stats - 2019 to Present - All - Apps.csv")
+funded <- read.csv("Copy of MEAP Program Stats - 2019 to Present - All - Funded.csv")
+```
+
+# Application Data EDA
+```{r}
+## How many applications are funded where the PI/Host institution does not live near the collection?
+# table(funded$Archival.Region)
+# table(funded$Host.Region)
+
+# Funded
+pi_host_funded <- cbind(funded$Archival.Region, funded$Host.Region)
+sum(pi_host_funded[,1] != pi_host_funded[,2]) / nrow(funded)
+
+# All Apps
+pi_host_apps <- cbind(apps$Archival.Region, apps$Host.Region)
+sum(pi_host_apps[,1] != pi_host_apps[,2]) / nrow(apps)
+
+## Type of projects submitted from different regions - Planning v. Project; Material Type
+library(dplyr)
+
+# Grant Type
+grant_all <- apps %>% 
+  group_by(Archival.Region) %>% 
+  reframe(Grant_Type = Grant.Type) %>% 
+  table()
+
+grant_funded <- funded %>% 
+  group_by(Archival.Region) %>% 
+  reframe(Grant_Type = Grant.Type) %>% 
+  table()
+
+# Material Type
+# apps$Primary.material.type
+material_all <- apps %>% 
+  group_by(Archival.Region) %>% 
+  reframe(Material_Type = Primary.material.type) %>% 
+  table()
+
+material_funded <- funded %>% 
+  group_by(Archival.Region) %>% 
+  reframe(Material_Type = Primary.archival.type.) %>% 
+  table()
+
+## How much money has gone to different regions over time?
+funded$Total.Amount <- as.numeric(gsub('[$,]', '', funded$Total.Amount))
+money_region <- funded %>% 
+  group_by(Archival.Region) %>% 
+  summarise(Total_Money = sum(Total.Amount)) 
+  # total money scaled to total funded apps?
+  # see change with time (covid effects)?
+
+money_country <- funded %>% 
+  group_by(Archival.Country) %>% 
+  summarise(Total_Money = sum(Total.Amount)) 
+
+write.table(grant_all, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/grant_all.csv", 
+            sep = ",", quote = FALSE, row.names = FALSE)
+write.table(grant_funded, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/grant_funded.csv", 
+            sep = ",", quote = FALSE, row.names = FALSE)
+write.table(material_all, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/material_all.csv", 
+            sep = ",", quote = FALSE, row.names = FALSE)
+write.table(material_funded, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/material_funded.csv", 
+            sep = ",", quote = FALSE, row.names = FALSE)
+write.csv(money_region, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/money_region.csv", 
+          row.names = FALSE)
+write.csv(money_country, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/money_country.csv", 
+          row.names = FALSE)
+```
+
+# Loading in Collection Data
+```{r}
+lebanon <- read.csv("Copy of Arab Image Foundation Photo Negatives - aifnegatives-works.csv")
+barbados <- read.csv("Copy of Barbados Ephemera Collection - barbados-works.csv.csv")
+timor <- read.csv("Copy of Fataluku Language and Culture - fatalukulanguage-complex.csv")
+mongolia <- read.csv("Copy of Humun Bichig Newspaper - mongolia-works.csv")
+lesotho <- read.csv("Copy of Ramakatane Collection - ramakatane-metadata.csv")
+india <- read.csv("Copy of rajasthanmusic-metadata - rajasthanmusic-metadata.csv")
+
+albania1 <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-batch01.csv")
+albania2 <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-batch02.csv")
+albania3 <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-batch03.csv")
+albania4 <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-batch04.csv")
+albania5 <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-batch05.csv")
+albania6 <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-batch06.csv")
+albania7 <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-batch07.csv")
+albania8 <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-batch08.csv")
+albania9 <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-batch09-01.csv")
+
+brazil_ibicaba1 <- read.csv("Copy of Ibicaba Farm Records - ibicaba-batch05.csv")
+brazil_ibicaba2 <- read.csv("Copy of Ibicaba Farm Records - ibicaba-works.csv")
+
+afghanistan1 <- read.csv("Copy of Louis Dupree and Nancy Dupree Collection - dupree-batch04.csv")
+afghanistan2 <- read.csv("Copy of Louis Dupree and Nancy Dupree Collection - dupree-works.csv")
+
+brazil_obidos1 <- read.csv("Copy of Obidos Court Records metadata - obidos-works.csv")
+brazil_obidos2 <- read.csv("Copy of Obidos Court Records metadata - obidos-works02.csv")
+
+chile1 <- read.csv("Copy of Centro Cultural Tallersol (Chile) - cct-simple-works.csv")
+chile2 <- read.csv("Copy of Centro Cultural Tallersol (Chile) - cct-complex-works.csv")
+
+dominican1 <- read.csv("Copy of elmundoaldia - elmundoaldia-works-batch02.csv")
+dominican2 <- read.csv("Copy of elmundoaldia - elmundoaldia-works.csv")
+
+haiti1 <- read.csv("Copy of MEAPHaiti - haiti-batch01-works.csv")
+haiti2 <- read.csv("Copy of MEAPHaiti - haiti-batch02-works.csv")
+
+nigeria1 <- read.csv("Copy of ibadan-soundvision - ibadansoundvision-audio.csv")
+nigeria2 <- read.csv("Copy of ibadan-soundvision - ibadansoundvision-works.csv")
+nigeria3 <- read.csv("Copy of ibadan-soundvision - ibadansoundvision-audio-batch02.csv")
+nigeria4 <- read.csv("Copy of ibadan-soundvision - ibadansoundvision-works-batch02.csv")
+
+peru1 <- read.csv("Copy of Archive of Confederación Campesina del Perú (CCP) - ccp-works-complex.csv")
+peru2 <- read.csv("Copy of Archive of Confederación Campesina del Perú (CCP) - ccp-batch03-works.csv")
+
+argentina1 <- read.csv("Copy of memoria-abierta - memoria-abierta-works-batch01.csv")
+argentina2 <- read.csv("Copy of memoria-abierta - memoria-abierta-works-batch02-atem.csv")
+argentina3 <- read.csv("Copy of memoria-abierta - memoria-abierta-works-batch02-serpaj.csv")
+argentina4 <- read.csv("Copy of memoria-abierta - memoria-abierta-works-batch03-apdh.csv")
+argentina5 <- read.csv("Copy of memoria-abierta - memoria-abierta-works-batch03-fedefam.csv")
+argentina6 <- read.csv("Copy of memoria-abierta - memoria-abierta-works-batch03-serpaj.csv")
+
+chile_mmdh1 <- read.csv("Copy of MMDH - mmdh-works-complex.csv")
+chile_mmdh2 <- read.csv("Copy of MMDH - mmdh-video.csv")
+chile_mmdh3 <- read.csv("Copy of MMDH - 0632004008.csv")
+chile_mmdh4 <- read.csv("Copy of MMDH - mmdh-notebooks.csv")
+chile_mmdh5 <- read.csv("Copy of MMDH - 0632006007-REVIEW.csv")
+chile_mmdh6 <- read.csv("Copy of MMDH - mmdh-missing.csv")
+
+guatemala <- read.csv("Copy of ODHAG_Guatemala - odhag-works.csv")
+kenya <- read.csv("Copy of Bookbunk Batch02 - bookbunk-batch02-works.csv")
+india_bengal <- read.csv("Copy of Religion and Politics in Modern Bengal (CSSSC) - bengal-works.csv")
+brazil_imago <- read.csv("Copy of Imago Institute - imago-works.csv")
+brazil_diocesan <- read.csv("Copy of boletimdiocesano - boletimdiocesano-batch01-works.csv")
+```
+
+# Collection Data Cleaning
+```{r}
+colnames(lebanon)[colnames(lebanon) == "Subject.topic"] <- "Subject"
+colnames(chile_mmdh6)[colnames(chile_mmdh6) == "Note.content"] <- "Contents.note"
+colnames(chile_mmdh6)[colnames(chile_mmdh6) == "Date.created..single."] <- "Date.normalized"
+colnames(chile_mmdh6)[colnames(chile_mmdh6) == "Subject.topic"] <- "Subject"
+colnames(chile_mmdh6)[colnames(chile_mmdh6) == "Abstract"] <- "Description.note"
+
+lebanon$AltTitle.translated <- NA
+barbados$AltTitle.translated <- NA
+lesotho$AltTitle.translated <- NA
+india$AltTitle.translated <- NA
+brazil_obidos2$AltTitle.translated <- NA
+afghanistan1$AltTitle.translated <- NA
+afghanistan2$AltTitle.translated <- NA
+dominican1$AltTitle.translated <- NA
+dominican2$AltTitle.translated <- NA
+nigeria2$AltTitle.translated <- NA
+nigeria4$AltTitle.translated <- NA
+chile1$AltTitle.translated <- NA
+chile2$AltTitle.translated <- NA
+chile_mmdh1$AltTitle.translated <- NA
+chile_mmdh5$AltTitle.translated <- NA
+chile_mmdh6$AltTitle.translated <- NA
+haiti2$AltTitle.translated <- NA
+kenya$AltTitle.translated <- NA
+timor$AltTitle.translated <- NA
+
+lesotho$Contents.note <- NA
+nigeria2$Contents.note <- NA
+argentina1$Contents.note <- NA
+chile_mmdh2$Contents.note <- NA
+chile_mmdh3$Contents.note <- NA
+chile_mmdh4$Contents.note <- NA
+haiti1$Contents.note <- NA
+haiti2$Contents.note <- NA
+peru1$Contents.note <- NA
+guatemala$Contents.note <- NA
+kenya$Contents.note <- NA
+mongolia$Contents.note <- NA
+
+argentina1$Description.note <- NA
+
+brazil_imago$Subject <- NA
+
+reduced_df <- function(dataset){
+  dataset[,c("Title", "AltTitle.translated", "Date.created","Date.normalized", "Genre",
+             "Type.typeOfResource", "Subject", "Subject.geographic", "Contents.note",
+             "Description.note")]
+}
+# Add variables: Local identifier, collection.physical, Archival collection number or identifier, Format.dimensions, Language,	Name.creator,	Place of origin,	Publisher.publisherName, Repository,	Rights.copyrightStatus, Rights.publicationStatus, Subject temporal
+
+afghanistan1 <- reduced_df(afghanistan1)
+afghanistan2 <- reduced_df(afghanistan2)
+albania1 <- reduced_df(albania1)
+albania2 <- reduced_df(albania2)
+albania3 <- reduced_df(albania3)
+albania4 <- reduced_df(albania4)
+albania5 <- reduced_df(albania5)
+albania6 <- reduced_df(albania6)
+albania7 <- reduced_df(albania7)
+albania8 <- reduced_df(albania8)
+albania9 <- reduced_df(albania9)
+lebanon <- reduced_df(lebanon)
+argentina1 <- reduced_df(argentina1)
+argentina2 <- reduced_df(argentina2)
+argentina3 <- reduced_df(argentina3)
+argentina4 <- reduced_df(argentina4)
+argentina5 <- reduced_df(argentina5)
+argentina6 <- reduced_df(argentina6)
+barbados <- reduced_df(barbados)
+brazil_ibicaba1 <- reduced_df(brazil_ibicaba1)
+brazil_ibicaba2 <- reduced_df(brazil_ibicaba2)
+brazil_obidos1 <- reduced_df(brazil_obidos1)
+brazil_obidos2 <- reduced_df(brazil_obidos2)
+dominican1 <- reduced_df(dominican1)
+dominican2 <- reduced_df(dominican2)
+india <- reduced_df(india)
+lesotho <- reduced_df(lesotho)
+mongolia <- reduced_df(mongolia)
+nigeria1 <- reduced_df(nigeria1)
+nigeria2 <- reduced_df(nigeria2)
+nigeria3 <- reduced_df(nigeria3)
+nigeria4 <- reduced_df(nigeria4)
+timor <- reduced_df(timor)
+chile1 <- reduced_df(chile1)
+chile2 <- reduced_df(chile2)
+chile_mmdh1 <- reduced_df(chile_mmdh1)
+chile_mmdh2 <- reduced_df(chile_mmdh2)
+chile_mmdh3 <- reduced_df(chile_mmdh3)
+chile_mmdh4 <- reduced_df(chile_mmdh4)
+chile_mmdh5 <- reduced_df(chile_mmdh5)
+chile_mmdh6 <- reduced_df(chile_mmdh6)
+haiti1 <- reduced_df(haiti1)
+haiti2 <- reduced_df(haiti2)
+peru1 <- reduced_df(peru1)
+peru2 <- reduced_df(peru2)
+guatemala <- reduced_df(guatemala)
+kenya <- reduced_df(kenya)
+india_bengal <- reduced_df(india_bengal)
+brazil_imago <- reduced_df(brazil_imago)
+brazil_diocesan <- reduced_df(brazil_diocesan)
+
+albania <- rbind(albania1, albania2, albania3, albania4, albania5, albania6, albania7, albania8)
+afghanistan <- rbind(afghanistan1, afghanistan2)
+argentina <- rbind(argentina1, argentina2, argentina3, argentina4, argentina5, argentina6)
+brazil_ibicaba <- rbind(brazil_ibicaba1, brazil_ibicaba2)
+brazil_obidos <- rbind(brazil_obidos1, brazil_obidos2)
+dominican <- rbind(dominican1, dominican2)
+nigeria <- rbind(nigeria1, nigeria2, nigeria3, nigeria4)
+chile <- rbind(chile1, chile2)
+chile_mmdh <- rbind(chile_mmdh1, chile_mmdh2, chile_mmdh3, chile_mmdh4, chile_mmdh5, chile_mmdh6)
+haiti <- rbind(haiti1, haiti2)
+peru <- rbind(peru1, peru2)
+
+all_df <- rbind(afghanistan, albania, lebanon, argentina, barbados, brazil_ibicaba, brazil_obidos,
+                chile, chile_mmdh, dominican, haiti, india, lesotho, mongolia, nigeria, peru, timor,
+                guatemala, kenya, india_bengal, brazil_imago, brazil_diocesan)
+
+write.csv(all_df, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/all_df.csv", row.names = FALSE)
+```
+
+# Grouping
+```{r}
+# By Country
+afghanistan$Collection <- "Afghanistan"
+albania$Collection <- "Albania"
+lebanon$Collection <- "Lebanon"
+argentina$Collection <- "Argentina"
+barbados$Collection <- "Barbados"
+brazil_ibicaba$Collection <- "Brazil_Ibicaba"
+brazil_obidos$Collection <- "Brazil_Obidos"
+chile$Collection <- "Chile_Tallersol"
+chile_mmdh$Collection <- "Chile_MMDH"
+dominican$Collection <- "Dominican_Republic"
+haiti$Collection <- "Haiti"
+india$Collection <- "India"
+lesotho$Collection <- "Lesotho"
+mongolia$Collection <- "Mongolia"
+nigeria$Collection <- "Nigeria"
+peru$Collection <- "Peru"
+timor$Collection <- "Timor_Leste"
+guatemala$Collection <- "Guatemala"
+kenya$Collection <- "Kenya"
+india_bengal$Collection <- "India_Bengal"
+brazil_imago$Collection <- "Brazil_Imago"
+brazil_diocesan$Collection <- "Brazil_Diocesan"
+
+# By Region
+afghanistan$Archival.Region <- "Middle_East"
+albania$Archival.Region <- "Europe"
+lebanon$Archival.Region <- "Middle_East"
+argentina$Archival.Region <- "Americas"
+barbados$Archival.Region <- "Americas"
+brazil_ibicaba$Archival.Region <- "Americas"
+brazil_obidos$Archival.Region <- "Americas"
+chile$Archival.Region <- "Americas"
+chile_mmdh$Archival.Region <- "Americas"
+dominican$Archival.Region <- "Americas"
+haiti$Archival.Region <- "Americas"
+india$Archival.Region <- "Asia"
+lesotho$Archival.Region <- "Africa"
+mongolia$Archival.Region <- "Asia"
+nigeria$Archival.Region <- "Africa"
+peru$Archival.Region <- "Americas"
+timor$Archival.Region <- "Asia"
+guatemala$Archival.Region <- "Americas"
+kenya$Archival.Region <- "Africa"
+india_bengal$Archival.Region <- "Asia"
+brazil_imago$Archival.Region <- "Americas"
+brazil_diocesan$Archival.Region <- "Americas"
+
+# Collection Name
+afghanistan$Collection.Name <- "Louis and Nancy Dupree"
+albania$Collection.Name <- "Albanian Photographic and Graphic Art"
+lebanon$Collection.Name <- "Arab Image Foundation Photo Negatives"
+argentina$Collection.Name <- "Memoria Abierta"
+barbados$Collection.Name <- "Barbados Ephemera"
+brazil_ibicaba$Collection.Name <- "Ibicaba Farm Records"
+brazil_obidos$Collection.Name <- "Obidos Court Records"
+chile$Collection.Name <- "Centro Cultural Tallersol"
+chile_mmdh$Collection.Name <- "MMDH"
+dominican$Collection.Name <- "El Mundo Al Dia"
+haiti$Collection.Name <- "Haiti"
+india$Collection.Name <- "Rajasthan Music"
+lesotho$Collection.Name <- "Ramakatane"
+mongolia$Collection.Name <- "Humun Bichig Newspaper"
+nigeria$Collection.Name <- "Ibadan Soundvision"
+peru$Collection.Name <- "Archive of Confederacion Campesina del Peru"
+timor$Collection.Name <- "Fatakulu Language and Culture"
+guatemala$Collection.Name <- "ODHAG_Guatemala"
+kenya$Collection.Name <- "Bookbunk Batch02"
+india_bengal$Collection.Name <- "Religion and Politics in Modern Bengal (CSSSC)"
+brazil_imago$Collection.Name <- "Imago Institute"
+brazil_diocesan$Collection.Name <- "boletimdiocesano"
+
+all_df <- rbind(afghanistan, albania, lebanon, argentina, barbados, brazil_ibicaba, brazil_obidos, chile, chile_mmdh, dominican, haiti, india, lesotho, mongolia, nigeria, peru, timor)
+
+# Index for Topic Modeling
+all_df$Index <- 1:nrow(all_df)
+```
+
+# NLP Analysis
+```{r}
+# Description, Subject
+library(tm)
+library(stopwords)
+library(SnowballC)
+library(dplyr)
+library(tidytext)
+
+# Pre-processing
+all_df$Subject <- gsub("\\|~\\|", " ", all_df$Subject)
+all_df$Subject <- gsub("--", " ", all_df$Subject)
+all_df$Subject <- gsub("~", " ", all_df$Subject)
+all_df$Subject <- gsub("[[:punct:]]", "", all_df$Subject)
+all_df$Subject <- gsub("[-'(),.|]", "", all_df$Subject)
+all_df$Subject <- gsub("\\d", "", all_df$Subject)
+all_df$Subject <- gsub("\"", "", all_df$Subject)
+
+all_df$Description.note <- gsub("~", " ", all_df$Description.note)
+all_df$Description.note <- gsub("[[:punct:]]", "", all_df$Description.note)
+all_df$Description.note <- gsub("\\|~\\|", " ", all_df$Description.note)
+all_df$Description.note <- gsub("--", " ", all_df$Description.note)
+all_df$Description.note <- gsub("[-'(),.|]", "", all_df$Description.note)
+all_df$Description.note <- gsub("\\d", "", all_df$Description.note)
+all_df$Description.note <- gsub("\"", "", all_df$Description.note)
+
+all_df$Subject <- tolower(all_df$Subject)
+all_df$Description.note <- tolower(all_df$Description.note)
+
+all_df$Subject <- removeNumbers(all_df$Subject, ucp = FALSE)
+all_df$Description.note <- removeNumbers(all_df$Description.note, ucp = FALSE)
+
+# Removing Non-English words
+# Note: also removes rows without subject or description note
+# all_df <- all_df[which(!grepl("[^\x01-\x7F]+", all_df$Subject)),]
+# all_df <- all_df[which(!grepl("[^\x01-\x7F]+", all_df$Description.note)),]
+
+# Removing stop words
+all_df <- all_df %>%
+  filter(!(Subject %in% stopwords(source = "stopwords-iso")))
+all_df <- all_df %>%
+  filter(!(Description.note %in% stopwords(source = "stopwords-iso")))
+all_df <- all_df %>%
+  filter(!(Subject %in% stopwords(source = "snowball")))
+all_df <- all_df %>%
+  filter(!(Description.note %in% stopwords(source = "snowball")))
+all_df <- all_df %>%
+  filter(!(Subject %in% stopwords(source = "smart")))
+all_df <- all_df %>%
+  filter(!(Description.note %in% stopwords(source = "smart")))
+
+# stopwords(source = "stopwords-iso")
+# stopwords(source = "snowball")
+# stopwords(source = "smart")
+
+# Stemming
+# all_df$Subject <- stemDocument(all_df$Subject)
+# all_df$Description.note <- stemDocument(all_df$Description.note)
+
+# dtm <- DocumentTermMatrix(all_df[,c(7, 10)])
+# inspect(dtm[1, 1000:1100])
+
+dtm_sub <- DocumentTermMatrix(all_df$Subject)
+dtm_des <- DocumentTermMatrix(all_df$Description.note)
+
+# Total Terms
+freq_sub <- colSums(as.matrix(dtm_sub))
+freq_des <- colSums(as.matrix(dtm_des))
+# length(freq_sub)
+# length(freq_des)
+
+# Most/Least Frequent Words
+ord_sub <- order(freq_sub, decreasing = TRUE)
+ord_des <- order(freq_des, decreasing = TRUE)
+# freq_sub[head(ord_sub)]
+# freq_des[head(ord_des)]
+# freq_sub[tail(ord_sub)]
+# freq_des[tail(ord_des)]
+
+# Remove Un-insightful Words
+dtmr_sub <- DocumentTermMatrix(all_df$Subject,
+                               control = list(wordLengths = c(4, 20)))
+dtmr_des <- DocumentTermMatrix(all_df$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_sub <- colSums(as.matrix(dtmr_sub))
+freqr_des <- colSums(as.matrix(dtmr_des))
+# length(freqr_sub)
+# length(freqr_des)
+ordr_sub <- order(freqr_sub, decreasing = TRUE)
+ordr_des <- order(freqr_des, decreasing = TRUE)
+# freqr_sub[head(ordr_sub)]
+# freqr_des[head(ordr_des)]
+# freqr_sub[tail(ordr_sub)]
+# freqr_des[tail(ordr_des)]
+# findFreqTerms(dtmr_sub, lowfreq = 25)
+# findFreqTerms(dtmr_des, lowfreq = 35)
+
+# Correlations
+# findAssocs(dtmr_sub, "union", 0.6)
+# findAssocs(dtmr_des, "particular", 0.6)
+
+# nlp_df_eng <- all_df[,c(7, 10)]
+# write.csv(nlp_df, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/nlp_df_eng.csv", row.names = FALSE)
+
+nlp_df <- all_df[,c(7, 10)]
+write.csv(nlp_df, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/nlp_df.csv", row.names = FALSE)
+```
+
+# All
+```{r}
+# Histogram
+library(ggplot2)
+
+wf1 <- data.frame(term = names(freqr_des), occurences = freqr_des)
+ggplot(subset(wf1, freqr_des>2500), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("All Collection Combined Description")
+
+wf2 <- data.frame(term = names(freqr_sub), occurences = freqr_sub)
+ggplot(subset(wf2, freqr_sub>2000), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("All Collection Combined Subject")
+```
+
+```{r}
+# Word Cloud
+library(wordcloud)
+set.seed(4)
+wordcloud(names(freqr_des), freqr_des, min.freq = 2500, colors = brewer.pal(6, "Dark2"))
+wordcloud(names(freq_sub), freq_sub, min.freq = 2500, colors = brewer.pal(6, "Dark2"))
+```
+
+Description (by Collection)
+```{r}
+library(ggplot2)
+# Afghanistan/Lebanon (not available)
+
+# Albania
+top_alb <- all_df %>% filter(Collection == "Albania")
+dtmr_alb <- DocumentTermMatrix(top_alb$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_alb <- colSums(as.matrix(dtmr_alb))
+ordr_alb <- order(freqr_alb, decreasing = TRUE)
+
+wf_alb <- data.frame(term = names(freqr_alb), occurences = freqr_alb)
+ggplot(subset(wf_alb, freqr_alb>3500), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Albanian Photographic and Graphic Art Description")
+
+# Argentina
+top_arg <- all_df %>% filter(Collection == "Argentina")
+dtmr_arg <- DocumentTermMatrix(top_arg$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_arg <- colSums(as.matrix(dtmr_arg))
+ordr_arg <- order(freqr_arg, decreasing = TRUE)
+
+wf_arg <- data.frame(term = names(freqr_arg), occurences = freqr_arg)
+ggplot(subset(wf_arg, freqr_arg>500), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Memoria Abierta Description")
+
+# Barbados
+top_bar <- all_df %>% filter(Collection == "Barbados")
+dtmr_bar <- DocumentTermMatrix(top_bar$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_bar <- colSums(as.matrix(dtmr_bar))
+ordr_bar <- order(freqr_bar, decreasing = TRUE)
+
+wf_bar <- data.frame(term = names(freqr_bar), occurences = freqr_bar)
+ggplot(subset(wf_bar, freqr_bar>150), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Barbados Ephemera Description")
+
+# Brazil (Ibicaba)
+top_ibi <- all_df %>% filter(Collection == "Brazil_Ibicaba")
+dtmr_ibi <- DocumentTermMatrix(top_ibi$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_ibi <- colSums(as.matrix(dtmr_ibi))
+ordr_ibi <- order(freqr_ibi, decreasing = TRUE)
+
+wf_ibi <- data.frame(term = names(freqr_ibi), occurences = freqr_ibi)
+ggplot(subset(wf_ibi, freqr_ibi>70), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Ibicaba Farm Records Description")
+
+# Brazil (Obidos)
+top_obi <- all_df %>% filter(Collection == "Brazil_Obidos")
+dtmr_obi <- DocumentTermMatrix(top_obi$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_obi <- colSums(as.matrix(dtmr_obi))
+ordr_obi <- order(freqr_obi, decreasing = TRUE)
+
+wf_obi <- data.frame(term = names(freqr_obi), occurences = freqr_obi)
+ggplot(subset(wf_obi, freqr_obi>150), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Obidos Court Records Description")
+
+# Chile (Tallersol)
+top_tal <- all_df %>% filter(Collection == "Chile_Tallersol")
+dtmr_tal <- DocumentTermMatrix(top_tal$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_tal <- colSums(as.matrix(dtmr_tal))
+ordr_tal <- order(freqr_tal, decreasing = TRUE)
+
+wf_tal <- data.frame(term = names(freqr_tal), occurences = freqr_tal)
+ggplot(subset(wf_tal, freqr_tal>20), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Centro Cultural Tallersol Description")
+
+# Chile (MMDH)
+top_mmdh <- all_df %>% filter(Collection == "Chile_MMDH")
+dtmr_mmdh <- DocumentTermMatrix(top_mmdh$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_mmdh <- colSums(as.matrix(dtmr_mmdh))
+ordr_mmdh <- order(freqr_mmdh, decreasing = TRUE)
+
+wf_mmdh <- data.frame(term = names(freqr_mmdh), occurences = freqr_mmdh)
+ggplot(subset(wf_mmdh, freqr_mmdh>650), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("MMDH Description")
+
+# Dominican Republic
+top_dom <- all_df %>% filter(Collection == "Dominican_Republic")
+dtmr_dom <- DocumentTermMatrix(top_dom$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_dom <- colSums(as.matrix(dtmr_dom))
+ordr_dom <- order(freqr_dom, decreasing = TRUE)
+
+wf_dom <- data.frame(term = names(freqr_dom), occurences = freqr_dom)
+ggplot(subset(wf_dom, freqr_dom>100), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("El Mundo Al Dia Description")
+
+# Haiti
+top_hai <- all_df %>% filter(Collection == "Haiti")
+dtmr_hai <- DocumentTermMatrix(top_hai$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_hai <- colSums(as.matrix(dtmr_hai))
+ordr_hai <- order(freqr_hai, decreasing = TRUE)
+
+wf_hai <- data.frame(term = names(freqr_hai), occurences = freqr_hai)
+ggplot(subset(wf_hai, freqr_hai>20), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Haiti Description")
+
+# India
+top_ind <- all_df %>% filter(Collection == "India")
+dtmr_ind <- DocumentTermMatrix(top_ind$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_ind <- colSums(as.matrix(dtmr_ind))
+ordr_ind <- order(freqr_ind, decreasing = TRUE)
+
+wf_ind <- data.frame(term = names(freqr_ind), occurences = freqr_ind)
+ggplot(subset(wf_ind, freqr_ind>300), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Rajasthan Music Description")
+
+# Lesotho
+top_les <- all_df %>% filter(Collection == "Lesotho")
+dtmr_les <- DocumentTermMatrix(top_les$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_les <- colSums(as.matrix(dtmr_les))
+ordr_les <- order(freqr_les, decreasing = TRUE)
+
+wf_les <- data.frame(term = names(freqr_les), occurences = freqr_les)
+ggplot(subset(wf_les, freqr_les>600), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Ramakatane Description")
+
+# Mongolia
+top_mon <- all_df %>% filter(Collection == "Mongolia")
+dtmr_mon <- DocumentTermMatrix(top_mon$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_mon <- colSums(as.matrix(dtmr_mon))
+ordr_mon <- order(freqr_mon, decreasing = TRUE)
+
+wf_mon <- data.frame(term = names(freqr_mon), occurences = freqr_mon)
+ggplot(subset(wf_mon, freqr_mon>50), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Humun Bichig Newspaper Description")
+
+# Nigeria
+top_nige <- all_df %>% filter(Collection == "Nigeria")
+dtmr_nige <- DocumentTermMatrix(top_nige$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_nige <- colSums(as.matrix(dtmr_nige))
+ordr_nige <- order(freqr_nige, decreasing = TRUE)
+
+wf_nige <- data.frame(term = names(freqr_nige), occurences = freqr_nige)
+ggplot(subset(wf_nige, freqr_nige>90), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Ibadan Soundvision Description")
+
+# Peru
+top_peru <- all_df %>% filter(Collection == "Peru")
+dtmr_peru <- DocumentTermMatrix(top_peru$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_peru <- colSums(as.matrix(dtmr_peru))
+ordr_peru <- order(freqr_peru, decreasing = TRUE)
+
+wf_peru <- data.frame(term = names(freqr_peru), occurences = freqr_peru)
+ggplot(subset(wf_peru, freqr_peru>200), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Archive of Confederacion Campesina del Peru Description")
+
+# Timor-Leste
+top_tim <- all_df %>% filter(Collection == "Timor_Leste")
+dtmr_tim <- DocumentTermMatrix(top_tim$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_tim <- colSums(as.matrix(dtmr_tim))
+ordr_tim <- order(freqr_tim, decreasing = TRUE)
+
+wf_tim <- data.frame(term = names(freqr_tim), occurences = freqr_tim)
+ggplot(subset(wf_tim, freqr_tim>5), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Fatakulu Langugage and Culture Description")
+
+# Guatemala
+# Kenya
+# India_Bengal
+# Brazil_Imago
+# Brazil_Diocesan
+```
+
+# Subject (by Collection)
+```{r}
+# Afghanistan
+top_afg1 <- all_df %>% filter(Collection == "Afghanistan")
+dtmr_afg1 <- DocumentTermMatrix(top_afg1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_afg1 <- colSums(as.matrix(dtmr_afg1))
+ordr_afg1 <- order(freqr_afg1, decreasing = TRUE)
+
+wf_afg1 <- data.frame(term = names(freqr_afg1), occurences = freqr_afg1)
+ggplot(subset(wf_afg1, freqr_afg1>300), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Louis and Nancy Dupree Subject")
+
+# Lebanon
+top_leb1 <- all_df %>% filter(Collection == "Lebanon")
+dtmr_leb1 <- DocumentTermMatrix(top_leb1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_leb1 <- colSums(as.matrix(dtmr_leb1))
+ordr_leb1 <- order(freqr_leb1, decreasing = TRUE)
+
+wf_leb1 <- data.frame(term = names(freqr_leb1), occurences = freqr_leb1)
+ggplot(subset(wf_leb1, freqr_leb1>250), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Arab Image Foundation Photo Negatives Subject")
+
+# Albania
+top_alb1 <- all_df %>% filter(Collection == "Albania")
+dtmr_alb1 <- DocumentTermMatrix(top_alb1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_alb1 <- colSums(as.matrix(dtmr_alb1))
+ordr_alb1 <- order(freqr_alb1, decreasing = TRUE)
+
+wf_alb1 <- data.frame(term = names(freqr_alb1), occurences = freqr_alb1)
+ggplot(subset(wf_alb1, freqr_alb1>3000), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Albanian Photographic and Graphic Art Subject")
+
+# Argentina
+top_arg1 <- all_df %>% filter(Collection == "Argentina")
+dtmr_arg1 <- DocumentTermMatrix(top_arg1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_arg1 <- colSums(as.matrix(dtmr_arg1))
+ordr_arg1 <- order(freqr_arg1, decreasing = TRUE)
+
+wf_arg1 <- data.frame(term = names(freqr_arg1), occurences = freqr_arg1)
+ggplot(subset(wf_arg1, freqr_arg1>250), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Memoria Abierta Subject")
+
+# Barbados
+top_bar1 <- all_df %>% filter(Collection == "Barbados")
+dtmr_bar1 <- DocumentTermMatrix(top_bar1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_bar1 <- colSums(as.matrix(dtmr_bar1))
+ordr_bar1 <- order(freqr_bar1, decreasing = TRUE)
+
+wf_bar1 <- data.frame(term = names(freqr_bar1), occurences = freqr_bar1)
+ggplot(subset(wf_bar1, freqr_bar1>65), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Barbados Ephemera Subject")
+
+
+# Brazil (Ibicaba)
+top_ibi1 <- all_df %>% filter(Collection == "Brazil_Ibicaba")
+dtmr_ibi1 <- DocumentTermMatrix(top_ibi1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_ibi1 <- colSums(as.matrix(dtmr_ibi1))
+ordr_ibi1 <- order(freqr_ibi1, decreasing = TRUE)
+
+wf_ibi1 <- data.frame(term = names(freqr_ibi1), occurences = freqr_ibi1)
+ggplot(subset(wf_ibi1, freqr_ibi1>100), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Ibicaba Farm Records Subject")
+
+# Brazil (Obidos)
+top_obi1 <- all_df %>% filter(Collection == "Brazil_Obidos")
+dtmr_obi1 <- DocumentTermMatrix(top_obi1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_obi1 <- colSums(as.matrix(dtmr_obi1))
+ordr_obi1 <- order(freqr_obi1, decreasing = TRUE)
+
+wf_obi1 <- data.frame(term = names(freqr_obi1), occurences = freqr_obi1)
+ggplot(subset(wf_obi1, freqr_obi1>150), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Obidos Court Records Subject")
+
+# Chile (Tallersol)
+top_tal1 <- all_df %>% filter(Collection == "Chile_Tallersol")
+dtmr_tal1 <- DocumentTermMatrix(top_tal1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_tal1 <- colSums(as.matrix(dtmr_tal1))
+ordr_tal1 <- order(freqr_tal1, decreasing = TRUE)
+
+wf_tal1 <- data.frame(term = names(freqr_tal1), occurences = freqr_tal1)
+ggplot(subset(wf_tal1, freqr_tal1>5), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Centro Cultural Tallersol Subject")
+
+# Chile (MMDH)
+top_mmdh1 <- all_df %>% filter(Collection == "Chile_MMDH")
+dtmr_mmdh1 <- DocumentTermMatrix(top_mmdh1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_mmdh1 <- colSums(as.matrix(dtmr_mmdh1))
+ordr_mmdh1 <- order(freqr_mmdh1, decreasing = TRUE)
+
+wf_mmdh1 <- data.frame(term = names(freqr_mmdh1), occurences = freqr_mmdh1)
+ggplot(subset(wf_mmdh1, freqr_mmdh1>350), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("MMDH Subject")
+
+# Dominican Republic
+top_dom1 <- all_df %>% filter(Collection == "Dominican_Republic")
+dtmr_dom1 <- DocumentTermMatrix(top_dom1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_dom1 <- colSums(as.matrix(dtmr_dom1))
+ordr_dom1 <- order(freqr_dom1, decreasing = TRUE)
+
+wf_dom1 <- data.frame(term = names(freqr_dom1), occurences = freqr_dom1)
+ggplot(subset(wf_dom1, freqr_dom1>20), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("El Mundo Al Dia Subject")
+
+# Haiti
+top_hai1 <- all_df %>% filter(Collection == "Haiti")
+dtmr_hai1 <- DocumentTermMatrix(top_hai1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_hai1 <- colSums(as.matrix(dtmr_hai1))
+ordr_hai1 <- order(freqr_hai1, decreasing = TRUE)
+
+wf_hai1 <- data.frame(term = names(freqr_hai1), occurences = freqr_hai1)
+ggplot(subset(wf_hai1, freqr_hai1>30), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Haiti Subject")
+
+# India
+top_ind1 <- all_df %>% filter(Collection == "India")
+dtmr_ind1 <- DocumentTermMatrix(top_ind1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_ind1 <- colSums(as.matrix(dtmr_ind1))
+ordr_ind1 <- order(freqr_ind1, decreasing = TRUE)
+
+wf_ind1 <- data.frame(term = names(freqr_ind1), occurences = freqr_ind1)
+ggplot(subset(wf_ind1, freqr_ind1>200), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Rajasthan Music Subject")
+
+# Lesotho
+top_les1 <- all_df %>% filter(Collection == "Lesotho")
+dtmr_les1 <- DocumentTermMatrix(top_les1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_les1 <- colSums(as.matrix(dtmr_les1))
+ordr_les1 <- order(freqr_les1, decreasing = TRUE)
+
+wf_les1 <- data.frame(term = names(freqr_les1), occurences = freqr_les1)
+ggplot(subset(wf_les1, freqr_les1>100), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Ramakatane Subject")
+
+# Mongolia
+top_mon1 <- all_df %>% filter(Collection == "Mongolia")
+dtmr_mon1 <- DocumentTermMatrix(top_mon1$Subject,
+                              control = list(wordLengths = c(4, 20)))
+freqr_mon1 <- colSums(as.matrix(dtmr_mon1))
+ordr_mon1 <- order(freqr_mon1, decreasing = TRUE)
+
+wf_mon1 <- data.frame(term = names(freqr_mon1), occurences = freqr_mon1)
+ggplot(subset(wf_mon1, freqr_mon1>5), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Humun Bichig Newspaper Subject")
+
+# Nigeria
+top_nige1 <- all_df %>% filter(Collection == "Nigeria")
+dtmr_nige1 <- DocumentTermMatrix(top_nige1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_nige1 <- colSums(as.matrix(dtmr_nige1))
+ordr_nige1 <- order(freqr_nige1, decreasing = TRUE)
+
+wf_nige1 <- data.frame(term = names(freqr_nige1), occurences = freqr_nige1)
+ggplot(subset(wf_nige1, freqr_nige1>150), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Ibadan Soundvision Subject")
+
+# Peru
+top_peru1 <- all_df %>% filter(Collection == "Peru")
+dtmr_peru1 <- DocumentTermMatrix(top_peru1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_peru1 <- colSums(as.matrix(dtmr_peru1))
+ordr_peru1 <- order(freqr_peru1, decreasing = TRUE)
+
+wf_peru1 <- data.frame(term = names(freqr_peru1), occurences = freqr_peru1)
+ggplot(subset(wf_peru1, freqr_peru1>100), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Archive of Confederacion Campesina del Peru Subject")
+
+# Timor-Leste
+top_tim1 <- all_df %>% filter(Collection == "Timor_Leste")
+dtmr_tim1 <- DocumentTermMatrix(top_tim1$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_tim1 <- colSums(as.matrix(dtmr_tim1))
+ordr_tim1 <- order(freqr_tim1, decreasing = TRUE)
+
+wf_tim1 <- data.frame(term = names(freqr_tim1), occurences = freqr_tim1)
+ggplot(subset(wf_tim1, freqr_tim1>1), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Fatakulu Language and Culture Subject")
+
+# Guatemala
+# Kenya
+# India_Bengal
+# Brazil_Imago
+# Brazil_Diocesan
+```
+
+# Description (by Region)
+```{r}
+# Middle East (not available)
+
+# Africa
+top_africa <- all_df %>% filter(Archival.Region == "Africa")
+dtmr_africa <- DocumentTermMatrix(top_africa$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_africa <- colSums(as.matrix(dtmr_africa))
+ordr_africa <- order(freqr_africa, decreasing = TRUE)
+
+wf_africa <- data.frame(term = names(freqr_africa), occurences = freqr_africa)
+ggplot(subset(wf_africa, freqr_africa>500), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Africa Region Description")
+
+# Americas
+top_americas <- all_df %>% filter(Archival.Region == "Americas")
+dtmr_americas <- DocumentTermMatrix(top_americas$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_americas <- colSums(as.matrix(dtmr_americas))
+ordr_americas <- order(freqr_americas, decreasing = TRUE)
+
+wf_americas <- data.frame(term = names(freqr_americas), occurences = freqr_americas)
+ggplot(subset(wf_americas, freqr_americas>1000), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Americas Region Description")
+
+# Asia
+top_asia <- all_df %>% filter(Archival.Region == "Asia")
+dtmr_asia <- DocumentTermMatrix(top_asia$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_asia <- colSums(as.matrix(dtmr_asia))
+ordr_asia <- order(freqr_asia, decreasing = TRUE)
+
+wf_asia <- data.frame(term = names(freqr_asia), occurences = freqr_asia)
+ggplot(subset(wf_asia, freqr_asia>250), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Asia Region Description")
+
+# Europe
+top_eu <- all_df %>% filter(Archival.Region == "Europe")
+dtmr_eu <- DocumentTermMatrix(top_eu$Description.note,
+                               control = list(wordLengths = c(4, 20)))
+freqr_eu <- colSums(as.matrix(dtmr_eu))
+ordr_eu <- order(freqr_eu, decreasing = TRUE)
+
+wf_eu <- data.frame(term = names(freqr_eu), occurences = freqr_eu)
+ggplot(subset(wf_eu, freqr_eu>4000), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Europe Region Description")
+```
+
+# Subject (by Region)
+```{r}
+# Middle East
+top_me <- all_df %>% filter(Archival.Region == "Middle_East")
+dtmr_me <- DocumentTermMatrix(top_me$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_me <- colSums(as.matrix(dtmr_me))
+ordr_me <- order(freqr_me, decreasing = TRUE)
+
+wf_me <- data.frame(term = names(freqr_me), occurences = freqr_me)
+ggplot(subset(wf_me, freqr_me>500), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Middle East Region Subject")
+
+# Africa
+top_africa <- all_df %>% filter(Archival.Region == "Africa")
+dtmr_africa <- DocumentTermMatrix(top_africa$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_africa <- colSums(as.matrix(dtmr_africa))
+ordr_africa <- order(freqr_africa, decreasing = TRUE)
+
+wf_africa <- data.frame(term = names(freqr_africa), occurences = freqr_africa)
+ggplot(subset(wf_africa, freqr_africa>400), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Africa Region Subject")
+
+# Americas
+top_americas <- all_df %>% filter(Archival.Region == "Americas")
+dtmr_americas <- DocumentTermMatrix(top_americas$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_americas <- colSums(as.matrix(dtmr_americas))
+ordr_americas <- order(freqr_americas, decreasing = TRUE)
+
+wf_americas <- data.frame(term = names(freqr_americas), occurences = freqr_americas)
+ggplot(subset(wf_americas, freqr_americas>500), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Americas Region Subject")
+
+# Asia
+top_asia <- all_df %>% filter(Archival.Region == "Asia")
+dtmr_asia <- DocumentTermMatrix(top_asia$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_asia <- colSums(as.matrix(dtmr_asia))
+ordr_asia <- order(freqr_asia, decreasing = TRUE)
+
+wf_asia <- data.frame(term = names(freqr_asia), occurences = freqr_asia)
+ggplot(subset(wf_asia, freqr_asia>500), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Asia Region Subject")
+
+# Europe
+top_eu <- all_df %>% filter(Archival.Region == "Europe")
+dtmr_eu <- DocumentTermMatrix(top_eu$Subject,
+                               control = list(wordLengths = c(4, 20)))
+freqr_eu <- colSums(as.matrix(dtmr_eu))
+ordr_eu <- order(freqr_eu, decreasing = TRUE)
+
+wf_eu <- data.frame(term = names(freqr_eu), occurences = freqr_eu)
+ggplot(subset(wf_eu, freqr_eu>2000), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity", fill = "#FFD100") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Europe Region Subject")
+```
+
+# Scaling/Normalizing
+```{r}
+library(tidytext)
+library(dplyr)
+options(dplyr.summarise.inform = FALSE)
+
+# Top Words by Region (Description)
+
+words <- all_df %>% 
+  unnest_tokens(word, Description.note) %>%
+  anti_join(stop_words)
+
+# Term frequency-inverse document frequency 
+tf_idf <- words %>%
+  group_by(Archival.Region, word) %>%
+  summarize(tf = n()) %>%
+  ungroup() %>%
+  mutate(idf = log(n_distinct(Archival.Region) /
+                     n_distinct(Archival.Region[!duplicated(word)]))) %>%
+  mutate(tf_idf = tf * idf) %>%
+  filter(nchar(word) > 3) %>%
+  arrange(Archival.Region, desc(tf_idf))
+
+tf_idf_df <- tf_idf %>%
+  group_by(Archival.Region) %>%
+  top_n(10, tf_idf) %>%
+  arrange(Archival.Region, desc(tf_idf))
+```
+
+# Visualizing by Region (Scaled)
+```{r}
+# Description
+
+tf_idf_af <- tf_idf_df[tf_idf_df$Archival.Region == "Africa",]
+tf_idf_am <- tf_idf_df[tf_idf_df$Archival.Region == "Americas",]
+tf_idf_as <- tf_idf_df[tf_idf_df$Archival.Region == "Asia",]
+tf_idf_eu <- tf_idf_df[tf_idf_df$Archival.Region == "Europe",]
+
+ggplot(tf_idf_af, aes(reorder(word, -tf_idf), tf_idf)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Africa Region Scaled Description")
+
+ggplot(tf_idf_am, aes(reorder(word, -tf_idf), tf_idf)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Americas Region Scaled Description")
+
+ggplot(tf_idf_as, aes(reorder(word, -tf_idf), tf_idf)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Asia Region Scaled Description")
+
+ggplot(tf_idf_eu, aes(reorder(word, -tf_idf), tf_idf)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Europe Region Scaled Description")
+```
+
+# Matching between Region (Description)
+```{r}
+library(tidytext)
+
+custom_stop_words <- bind_rows(stop_words,
+                               data_frame(word = stopwords("spanish"),
+                                          lexicon = "custom"))
+
+words <- all_df %>% 
+  unnest_tokens(word, Description.note) %>%
+  anti_join(custom_stop_words)
+
+word_counts <- words %>%
+  group_by(Archival.Region, word) %>%
+  count()
+
+matching_words <- function(x, y){
+  common_words <- intersect(word_counts$word[word_counts$Archival.Region == x],
+                            word_counts$word[word_counts$Archival.Region == y])
+
+  common_word_counts <- word_counts %>%
+    filter(Archival.Region %in% c(x, y),
+           word %in% common_words) %>%
+    group_by(word) %>%
+    summarise(total_count = sum(n)) %>%
+    arrange(desc(total_count)) %>%
+    slice(1:20)
+
+  common_word_counts
+}
+
+as_af <- as.data.frame(matching_words("Asia", "Africa"))
+as_am <- as.data.frame(matching_words("Asia", "Americas"))
+as_eu <- as.data.frame(matching_words("Asia", "Europe"))
+am_af <- as.data.frame(matching_words("Americas", "Africa"))
+am_eu <- as.data.frame(matching_words("Americas", "Europe"))
+af_eu <- as.data.frame(matching_words("Africa", "Europe"))
+```
+
+# Visualizing Matching Words
+```{r}
+ggplot(as_af, aes(reorder(word, -total_count), total_count)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Asia v Africa Matching Words (Description)")
+
+ggplot(as_am, aes(reorder(word, -total_count), total_count)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Asia v Americas Matching Words (Description)")
+
+ggplot(as_eu, aes(reorder(word, -total_count), total_count)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Asia v Europe Matching Words (Description)")
+
+ggplot(am_af, aes(reorder(word, -total_count), total_count)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Americas v Africa Matching Words (Description)")
+
+ggplot(am_eu, aes(reorder(word, -total_count), total_count)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Americas v Europe Matching Words (Description)")
+
+ggplot(af_eu, aes(reorder(word, -total_count), total_count)) +
+  geom_bar(stat = "identity", fill = "#2D68C4") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Africa v Europe Matching Words (Description)")
+```
+
+# Common Words between Description and Subject
+```{r}
+library(tidytext)
+
+custom_stop_words <- bind_rows(stop_words,
+                               data_frame(word = stopwords("spanish"),
+                                          lexicon = "custom"))
+
+words <- all_df %>% 
+  unnest_tokens(word, Description.note) %>%
+  anti_join(custom_stop_words)
+
+word_counts <- words %>%
+  group_by(Archival.Region, word) %>%
+  count()
+
+words_sub <- all_df %>% 
+  unnest_tokens(word, Subject) %>%
+  anti_join(custom_stop_words)
+
+word_counts_sub <- words_sub %>%
+  group_by(Archival.Region, word) %>%
+  count()
+
+common_words_fun <- function(region){
+  common_words <- intersect(word_counts$word[word_counts$Archival.Region == region],
+                            word_counts_sub$word[word_counts_sub$Archival.Region == region])
+  
+  common_word_counts <- word_counts %>%
+    filter(Archival.Region == region, word %in% common_words)
+  
+  common_word_counts_sub <- word_counts_sub %>%
+    filter(Archival.Region == region, word %in% common_words)
+  
+  common_word_frequency <- merge(common_word_counts, common_word_counts_sub, 
+                                 by = "word", all = TRUE)
+  common_word_frequency$frequency <- rowSums(common_word_frequency[, c("n.x", "n.y")], 
+                                             na.rm = TRUE)
+  common_word_frequency <- common_word_frequency[, c("word", "frequency")]
+  common_word_frequency <- common_word_frequency[order(common_word_frequency$frequency,
+                                                       decreasing = TRUE), ]
+  common_word_frequency %>% slice(1:20)
+} 
+
+ds_af <- common_words_fun("Africa")
+ds_am <- common_words_fun("Americas")
+ds_as <- common_words_fun("Asia")
+ds_eu <- common_words_fun("Europe")
+```
+
+# Visualizing
+```{r}
+ggplot(ds_af, aes(reorder(word, -frequency), frequency)) +
+  geom_bar(stat = "identity", fill = "salmon") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Subject and Description Common Words Africa")
+
+ggplot(ds_am, aes(reorder(word, -frequency), frequency)) +
+  geom_bar(stat = "identity", fill = "salmon") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Subject and Description Common Words Americas")
+
+ggplot(ds_as, aes(reorder(word, -frequency), frequency)) +
+  geom_bar(stat = "identity", fill = "salmon") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Subject and Description Common Words Asia")
+
+ggplot(ds_eu, aes(reorder(word, -frequency), frequency)) +
+  geom_bar(stat = "identity", fill = "salmon") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Subject and Description Common Words Europe")
+```
+
+# Topic Modeling (Description)
+```{r}
+library(topicmodels)
+library(tm)
+library(forcats)
+
+eng_df <- all_df[which(!grepl("[^\x01-\x7F]+", all_df$Subject)),]
+eng_df <- all_df[which(!grepl("[^\x01-\x7F]+", all_df$Description.note)),]
+eng_df <- eng_df[!eng_df$Collection == "Afghanistan",]
+eng_df <- eng_df[!eng_df$Collection == "Lebanon",]
+
+custom_stop_words <- bind_rows(stop_words,
+                               data_frame(word = stopwords("spanish"),
+                                          lexicon = "custom"))
+
+# eng_df$Description.note <- stemDocument(eng_df$Description.note)
+
+word_prob <- function(x = 0){
+  if(x == 0){
+    words <- eng_df %>% 
+      unnest_tokens(word, Description.note) %>%
+      anti_join(custom_stop_words)
+  } else {
+    words <- eng_df %>% 
+      filter(Archival.Region == x) %>% 
+      unnest_tokens(word, Description.note) %>%
+      anti_join(custom_stop_words)
+  }
+  
+  dtm_topics <- words %>%
+    count(Index, word) %>%
+    cast_dtm(Index, word, n) %>%
+    as.matrix()
+  
+  # Latent Dirichlet Allocation
+  if(x == 0){
+    lda_out <- LDA(dtm_topics, k = 4, method = "Gibbs", control = list(seed = 10))
+  } else {
+    lda_out <- LDA(dtm_topics, k = 2, method = "Gibbs", control = list(seed = 10))
+  }
+  
+  # glimpse(lda_out)
+  
+  lda_topics <- lda_out %>%
+    tidy(matrix = "beta") %>%
+    arrange(desc(beta))
+  
+  word_prob <- lda_topics %>%
+    group_by(topic) %>%
+    top_n(10, beta) %>%
+    ungroup() %>%
+    mutate(term = fct_reorder(term, beta)) 
+}
+
+wp_all <- word_prob()
+wp_af <- word_prob("Africa")
+wp_am <- word_prob("Americas")
+wp_as <- word_prob("Asia")
+wp_eu <- word_prob("Europe")
+```
+
+# Visualizing Topics
+```{r}
+# All
+ggplot(wp_all, aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  ggtitle("Topic Modeling All Collections (Description)")
+
+# Africa
+ggplot(wp_af, aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  ggtitle("Topic Modeling Africa (Description)")
+
+# Americas
+ggplot(wp_am, aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  ggtitle("Topic Modeling Americas (Description)")
+
+# Asia
+ggplot(wp_as, aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  ggtitle("Topic Modeling Asia (Description)")
+
+# Europe
+ggplot(wp_eu, aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  ggtitle("Topic Modeling Europe (Description)")
+```
+
+# Topic Modeling by Subject
+```{r}
+word_prob <- function(x = 0){
+  if(x == 0){
+    words <- eng_df %>% 
+      unnest_tokens(word, Subject) %>%
+      anti_join(custom_stop_words)
+  } else {
+    words <- eng_df %>% 
+      filter(Archival.Region == x) %>% 
+      unnest_tokens(word, Subject) %>%
+      anti_join(custom_stop_words)
+  }
+  
+  dtm_topics <- words %>%
+    count(Index, word) %>%
+    cast_dtm(Index, word, n) %>%
+    as.matrix()
+  
+  # Latent Dirichlet Allocation
+  if(x == 0){
+    lda_out <- LDA(dtm_topics, k = 4, method = "Gibbs", control = list(seed = 10))
+  } else {
+    lda_out <- LDA(dtm_topics, k = 2, method = "Gibbs", control = list(seed = 10))
+  }
+  
+  # glimpse(lda_out)
+  
+  lda_topics <- lda_out %>%
+    tidy(matrix = "beta") %>%
+    arrange(desc(beta))
+  
+  word_prob <- lda_topics %>%
+    group_by(topic) %>%
+    top_n(10, beta) %>%
+    ungroup() %>%
+    mutate(term = fct_reorder(term, beta)) 
+}
+
+wp_all <- word_prob()
+
+ggplot(wp_all, aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  ggtitle("Topic Modeling All Collections (Subject)")
+```
+
+
+# Genre Analysis
+```{r}
+# table(all_df$Type.typeOfResource)
+# table(all_df$Genre)
+sub_df <- all_df
+sub_df$Genre <- gsub("\\|~\\|", " ", sub_df$Genre)
+sub_df$Genre <- gsub("[-'(),.|}]", "", sub_df$Genre)
+sub_df$Genre <- tolower(sub_df$Genre)
+sub_df$Genre <- stemDocument(sub_df$Genre)
+
+dtm_genre <- DocumentTermMatrix(sub_df$Genre)
+freq_genre <- colSums(as.matrix(dtm_genre))
+ord_genre <- order(freq_genre, decreasing = TRUE)
+
+library(ggplot2)
+genre1 <- data.frame(term = names(freq_genre), occurences = freq_genre)
+ggplot(subset(genre1, freq_genre>100), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("All Collections Genre")
+```
+
+# Genre by Region
+```{r}
+# Middle East
+top_me <- sub_df %>% filter(Archival.Region == "Middle_East")
+dtmr_me_gen <- DocumentTermMatrix(top_me$Genre)
+freqr_me_gen <- colSums(as.matrix(dtmr_me_gen))
+ordr_me_gen <- order(freqr_me_gen, decreasing = TRUE)
+
+wf_me_gen <- data.frame(term = names(freqr_me_gen), occurences = freqr_me_gen)
+ggplot(wf_me_gen, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Middle East Region Genre")
+
+# Africa
+top_africa <- sub_df %>% filter(Archival.Region == "Africa")
+dtmr_africa_gen <- DocumentTermMatrix(top_africa$Genre)
+freqr_africa_gen <- colSums(as.matrix(dtmr_africa_gen))
+ordr_africa_gen <- order(freqr_africa_gen, decreasing = TRUE)
+
+wf_africa_gen <- data.frame(term = names(freqr_africa_gen), occurences = freqr_africa_gen)
+ggplot(wf_africa_gen, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Africa Region Genre")
+
+# Americas
+top_americas <- sub_df %>% filter(Archival.Region == "Americas")
+dtmr_americas_gen <- DocumentTermMatrix(top_americas$Genre)
+freqr_americas_gen <- colSums(as.matrix(dtmr_americas_gen))
+ordr_americas_gen <- order(freqr_americas_gen, decreasing = TRUE)
+
+wf_americas_gen <- data.frame(term = names(freqr_americas_gen), occurences = freqr_americas_gen)
+ggplot(subset(wf_americas_gen, freqr_americas_gen > 100), 
+       aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Americas Region Genre")
+
+# Asia
+top_asia <- sub_df %>% filter(Archival.Region == "Asia")
+dtmr_asia_gen <- DocumentTermMatrix(top_asia$Genre)
+freqr_asia_gen <- colSums(as.matrix(dtmr_asia_gen))
+ordr_asia_gen <- order(freqr_asia_gen, decreasing = TRUE)
+
+wf_asia_gen <- data.frame(term = names(freqr_asia_gen), occurences = freqr_asia_gen)
+ggplot(wf_asia_gen, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Asia Region Genre")
+
+# Europe
+top_eu <- sub_df %>% filter(Archival.Region == "Europe")
+dtmr_eu_gen <- DocumentTermMatrix(top_eu$Genre)
+freqr_eu_gen <- colSums(as.matrix(dtmr_eu_gen))
+ordr_eu_gen <- order(freqr_eu_gen, decreasing = TRUE)
+
+wf_eu_gen <- data.frame(term = names(freqr_eu_gen), occurences = freqr_eu_gen)
+ggplot(wf_eu_gen, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Europe Region Genre")
+```
+
+Genre by Collection
+```{r}
+# Afghanistan
+top_afg2 <- sub_df %>% filter(Collection == "Afghanistan")
+dtmr_afg2 <- DocumentTermMatrix(top_afg2$Genre)
+freqr_afg2 <- colSums(as.matrix(dtmr_afg2))
+ordr_afg2 <- order(freqr_afg2, decreasing = TRUE)
+
+wf_afg2 <- data.frame(term = names(freqr_afg2), occurences = freqr_afg2)
+ggplot(wf_afg2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Louis and Nancy Dupree Genre")
+
+# Lebanon
+top_leb2 <- sub_df %>% filter(Collection == "Lebanon")
+dtmr_leb2 <- DocumentTermMatrix(top_leb2$Genre)
+freqr_leb2 <- colSums(as.matrix(dtmr_leb2))
+ordr_leb2 <- order(freqr_leb2, decreasing = TRUE)
+
+wf_leb2 <- data.frame(term = names(freqr_leb2), occurences = freqr_leb2)
+ggplot(wf_leb2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Arab Image Foundation Photo Negatives Genre")
+
+# Albania
+top_alb2 <- sub_df %>% filter(Collection == "Albania")
+dtmr_alb2 <- DocumentTermMatrix(top_alb2$Genre)
+freqr_alb2 <- colSums(as.matrix(dtmr_alb2))
+ordr_alb2 <- order(freqr_alb2, decreasing = TRUE)
+
+wf_alb2 <- data.frame(term = names(freqr_alb2), occurences = freqr_alb2)
+ggplot(wf_alb2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Albanian Photographic and Graphic Art Genre")
+
+# Argentina
+top_arg2 <- sub_df %>% filter(Collection == "Argentina")
+dtmr_arg2 <- DocumentTermMatrix(top_arg2$Genre)
+freqr_arg2 <- colSums(as.matrix(dtmr_arg2))
+ordr_arg2 <- order(freqr_arg2, decreasing = TRUE)
+
+wf_arg2 <- data.frame(term = names(freqr_arg2), occurences = freqr_arg2)
+ggplot(wf_arg2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Memoria Abierta Genre")
+
+# Barbados
+top_bar2 <- sub_df %>% filter(Collection == "Barbados")
+dtmr_bar2 <- DocumentTermMatrix(top_bar2$Genre)
+freqr_bar2 <- colSums(as.matrix(dtmr_bar2))
+ordr_bar2 <- order(freqr_bar2, decreasing = TRUE)
+
+wf_bar2 <- data.frame(term = names(freqr_bar2), occurences = freqr_bar2)
+ggplot(subset(wf_bar2, occurences > 10), aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Barbados Ephemera Genre")
+
+# Brazil (Ibicaba)
+top_ibi2 <- sub_df %>% filter(Collection == "Brazil_Ibicaba")
+dtmr_ibi2 <- DocumentTermMatrix(top_ibi2$Genre)
+freqr_ibi2 <- colSums(as.matrix(dtmr_ibi2))
+ordr_ibi2 <- order(freqr_ibi2, decreasing = TRUE)
+
+wf_ibi2 <- data.frame(term = names(freqr_ibi2), occurences = freqr_ibi2)
+ggplot(wf_ibi2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Ibicaba Farm Records Genre")
+
+# Brazil (Obidos)
+top_obi2 <- sub_df %>% filter(Collection == "Brazil_Obidos")
+dtmr_obi2 <- DocumentTermMatrix(top_obi2$Genre)
+freqr_obi2 <- colSums(as.matrix(dtmr_obi2))
+ordr_obi2 <- order(freqr_obi2, decreasing = TRUE)
+
+wf_obi2 <- data.frame(term = names(freqr_obi2), occurences = freqr_obi2)
+ggplot(wf_obi2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Obidos Court Records Genre")
+
+# Chile (Tallersol)
+top_tal2 <- sub_df %>% filter(Collection == "Chile_Tallersol")
+dtmr_tal2 <- DocumentTermMatrix(top_tal2$Genre)
+freqr_tal2 <- colSums(as.matrix(dtmr_tal2))
+ordr_tal2 <- order(freqr_tal2, decreasing = TRUE)
+
+wf_tal2 <- data.frame(term = names(freqr_tal2), occurences = freqr_tal2)
+ggplot(wf_tal2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Centro Cultural Tallersol Genre")
+
+# Chile (MMDH)
+top_mmdh2 <- sub_df %>% filter(Collection == "Chile_MMDH")
+dtmr_mmdh2 <- DocumentTermMatrix(top_mmdh2$Genre)
+freqr_mmdh2 <- colSums(as.matrix(dtmr_mmdh2))
+ordr_mmdh2 <- order(freqr_mmdh2, decreasing = TRUE)
+
+wf_mmdh2 <- data.frame(term = names(freqr_mmdh2), occurences = freqr_mmdh2)
+ggplot(wf_mmdh2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("MMDH Genre")
+
+# Dominican Republic
+top_dom2 <- sub_df %>% filter(Collection == "Dominican_Republic")
+dtmr_dom2 <- DocumentTermMatrix(top_dom2$Genre)
+freqr_dom2 <- colSums(as.matrix(dtmr_dom2))
+ordr_dom2 <- order(freqr_dom2, decreasing = TRUE)
+
+wf_dom2 <- data.frame(term = names(freqr_dom2), occurences = freqr_dom2)
+ggplot(wf_dom2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("El Mundo Al Dia Genre")
+
+# Haiti
+top_hai2 <- sub_df %>% filter(Collection == "Haiti")
+dtmr_hai2 <- DocumentTermMatrix(top_hai2$Genre)
+freqr_hai2 <- colSums(as.matrix(dtmr_hai2))
+ordr_hai2 <- order(freqr_hai2, decreasing = TRUE)
+
+wf_hai2 <- data.frame(term = names(freqr_hai2), occurences = freqr_hai2)
+ggplot(wf_hai2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Haiti Genre")
+
+# India
+top_ind2 <- sub_df %>% filter(Collection == "India")
+dtmr_ind2 <- DocumentTermMatrix(top_ind2$Genre)
+freqr_ind2 <- colSums(as.matrix(dtmr_ind2))
+ordr_ind2 <- order(freqr_ind2, decreasing = TRUE)
+
+wf_ind2 <- data.frame(term = names(freqr_ind2), occurences = freqr_ind2)
+ggplot(wf_ind2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Rajasthan Music Genre")
+
+# Lesotho
+top_les2 <- sub_df %>% filter(Collection == "Lesotho")
+dtmr_les2 <- DocumentTermMatrix(top_les2$Genre)
+freqr_les2 <- colSums(as.matrix(dtmr_les2))
+ordr_les2 <- order(freqr_les2, decreasing = TRUE)
+
+wf_les2 <- data.frame(term = names(freqr_les2), occurences = freqr_les2)
+ggplot(wf_les2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Ramakatane Genre")
+
+# Mongolia
+top_mon2 <- sub_df %>% filter(Collection == "Mongolia")
+dtmr_mon2 <- DocumentTermMatrix(top_mon2$Genre)
+freqr_mon2 <- colSums(as.matrix(dtmr_mon2))
+ordr_mon2 <- order(freqr_mon2, decreasing = TRUE)
+
+wf_mon2 <- data.frame(term = names(freqr_mon2), occurences = freqr_mon2)
+ggplot(wf_mon2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Humun Bichig Newspaper Genre")
+
+# Nigeria
+top_nige2 <- sub_df %>% filter(Collection == "Nigeria")
+dtmr_nige2 <- DocumentTermMatrix(top_nige2$Genre)
+freqr_nige2 <- colSums(as.matrix(dtmr_nige2))
+ordr_nige2 <- order(freqr_nige2, decreasing = TRUE)
+
+wf_nige2 <- data.frame(term = names(freqr_nige2), occurences = freqr_nige2)
+ggplot(wf_nige2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Ibadan Soundvision Genre")
+
+# Peru
+top_peru2 <- sub_df %>% filter(Collection == "Peru")
+dtmr_peru2 <- DocumentTermMatrix(top_peru2$Genre)
+freqr_peru2 <- colSums(as.matrix(dtmr_peru2))
+ordr_peru2 <- order(freqr_peru2, decreasing = TRUE)
+
+wf_peru2 <- data.frame(term = names(freqr_peru2), occurences = freqr_peru2)
+ggplot(wf_peru2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Archive of Confederacion Campesina del Peru Genre")
+
+# Timor-Leste
+top_tim2 <- sub_df %>% filter(Collection == "Timor_Leste")
+dtmr_tim2 <- DocumentTermMatrix(top_tim2$Genre)
+freqr_tim2 <- colSums(as.matrix(dtmr_tim2))
+ordr_tim2 <- order(freqr_tim2, decreasing = TRUE)
+
+wf_tim2 <- data.frame(term = names(freqr_tim2), occurences = freqr_tim2)
+ggplot(wf_tim2, aes(reorder(term, -occurences), occurences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 45, hjust = 1))+
+  ggtitle("Fatakulu Language and Culture Genre")
+
+# Guatemala
+# Kenya
+# India_Bengal
+# Brazil_Imago
+# Brazil_Diocesan
+```
+
+Circular Bar Chart: Genre by Collection (Smaller Focus)
+```{r}
+library(tidyverse)
+library(viridis)
+library(ggplot2)
+
+wf_afg2$region <- "Middle_East"; wf_alb2$region <- "Europe"; wf_leb2$region <- "Middle_East"
+wf_arg2$region <- "Americas"; wf_bar2$region <- "Americas"; wf_ibi2$region <- "Americas"
+wf_obi2$region <- "Americas"; wf_tal2$region <- "Americas"; wf_mmdh2$region <- "Americas"
+wf_dom2$region <- "Americas"; wf_hai2$region <- "Americas"; wf_ind2$region <- "Asia"
+wf_les2$region <- "Africa"; wf_mon2$region <- "Asia"; wf_nige2$region <- "Africa" 
+wf_peru2$region <- "Americas"; wf_tim2$region <- "Asia"
+
+wf_afg2$collection <- "Louis and Nancy Dupree"
+wf_alb2$collection <- "Albanian Photgraphic and Graphic Art"
+wf_leb2$collection <- "Arab Image Foundation Photo Negatives"
+wf_arg2$collection <- "Memoria Abierta"; wf_bar2$collection <- "Barbados Ephemera" 
+wf_ibi2$collection <- "Ibicaba Farm Records"; wf_obi2$collection <- "Obidos Court Records"
+wf_tal2$collection <- "Centro Cultural Tallersol"; wf_mmdh2$collection <- "MMDH"
+wf_dom2$collection <- "El Mundo Al Dia"; wf_hai2$collection <- "Haiti"
+wf_ind2$collection <- "Rajasthan Music"; wf_les2$collection <- "Ramakatane" 
+wf_mon2$collection <- "Humun Bichig Newspaper"; wf_nige2$collection <- "Ibadan Soundvision";
+wf_peru2$collection <- "Archive of Confederacion Campesina del Peru"; 
+wf_tim2$collection <- "Fatakulu Language and Culture"; 
+
+genre_combined <- rbind(wf_afg2, wf_alb2, wf_leb2, wf_arg2, subset(wf_bar2, occurences > 10), 
+                        wf_ibi2, wf_obi2, wf_tal2, wf_mmdh2, wf_dom2, wf_hai2, wf_ind2, 
+                        wf_les2, wf_mon2, wf_nige2,wf_peru2, wf_tim2)
+
+genre_combined$region <- as.factor(genre_combined$region)
+genre_combined$collection <- as.factor(genre_combined$collection)
+
+empty_bar <- 3
+to_add <- data.frame(matrix(NA, empty_bar*nlevels(genre_combined$collection), 
+                            ncol(genre_combined)))
+colnames(to_add) <- colnames(genre_combined)
+to_add$collection <- rep(levels(genre_combined$collection), each=empty_bar)
+genre_combined <- rbind(genre_combined, to_add)
+genre_combined <- genre_combined %>% arrange(collection)
+genre_combined$id <- seq(1, nrow(genre_combined))
+
+# Name and y position of each label
+label_data <- genre_combined
+number_of_bar <- nrow(label_data)
+angle <- 90 - 360 * (label_data$id-0.5) / number_of_bar 
+label_data$hjust <- ifelse(angle < -90, 1, 0)
+label_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+# Data frame for base lines
+base_data <- genre_combined %>% 
+  group_by(collection) %>% 
+  summarize(start=min(id), end=max(id) - empty_bar) %>% 
+  rowwise() %>% 
+  mutate(title=mean(c(start, end)))
+
+angle <- 90 - 360 * (base_data$title-0.5)/number_of_bar  
+base_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+# Data frame for grid (scales)
+grid_data <- base_data
+grid_data$end <- grid_data$end[c(nrow(grid_data), 1:nrow(grid_data)-1)] + 1
+grid_data$start <- grid_data$start - 1
+grid_data <- grid_data[-1,]
+
+ggplot(genre_combined, aes(x=as.factor(id), y=occurences, fill=collection)) +       
+  geom_bar(aes(x=as.factor(id), y=occurences, fill=collection), stat="identity", alpha=0.5) +
+  
+  geom_segment(data=grid_data, aes(x = end, y = 125, xend = start, yend = 125), 
+               colour = "grey", alpha=1,size=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 100, xend = start, yend = 100), 
+               colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 75, xend = start, yend = 75), 
+               colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 50, xend = start, yend = 50), 
+               colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+  
+  annotate("text", x = rep(max(genre_combined$id), 4), y = c(50, 75, 100, 125), 
+           label = c("50", "75", "100", "125") ,
+           color="grey", size=3 , angle=0, 
+           fontface="bold", hjust=1) +
+  
+  geom_bar(aes(x=as.factor(id), y=occurences, fill=collection), stat="identity", alpha=0.5) +
+  ylim(-100, 125) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+  ) +
+  
+  coord_polar() + 
+  geom_text(data=label_data, aes(x=id, y=occurences+10, label=term, hjust=hjust), 
+            color="black", fontface="bold", alpha=0.6, size=2.5, angle= label_data$angle, 
+            inherit.aes = FALSE) +
+  
+  geom_segment(data=base_data, aes(x = start, y = -1, xend = end, yend = -1), 
+               colour = "black", alpha=0.6, size=0.8, inherit.aes = F) +
+  geom_text(data=base_data, aes(x = title, y = -6, label=collection, angle=angle),
+            hjust = c(rep(1, 10), rep(0, 7)), colour = "black", alpha=0.7, size=2, fontface="bold", 
+            inherit.aes = FALSE)
+```
+
+Circular Bar Chart: Genre by Region (Smaller Focus)
+```{r}
+genre_combined <- rbind(wf_afg2, wf_alb2, wf_leb2, wf_arg2, subset(wf_bar2, occurences > 10), 
+                        subset(wf_ibi2, occurences > 10), wf_obi2, wf_tal2, 
+                        subset(wf_mmdh2, occurences > 10), wf_dom2, wf_hai2, wf_ind2, 
+                        wf_les2, wf_mon2, wf_nige2, wf_peru2, wf_tim2)
+
+genre_combined$region <- as.factor(genre_combined$region)
+
+empty_bar <- 3
+to_add <- data.frame(matrix(NA, empty_bar*nlevels(genre_combined$region), 
+                            ncol(genre_combined)))
+colnames(to_add) <- colnames(genre_combined)
+to_add$region <- rep(levels(genre_combined$region), each=empty_bar)
+genre_combined <- rbind(genre_combined, to_add)
+genre_combined <- genre_combined %>% arrange(region)
+genre_combined$id <- seq(1, nrow(genre_combined))
+
+label_data <- genre_combined
+number_of_bar <- nrow(label_data)
+angle <- 90 - 360 * (label_data$id-0.5) / number_of_bar 
+label_data$hjust <- ifelse(angle < -90, 1, 0)
+label_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+base_data <- genre_combined %>% 
+  group_by(region) %>% 
+  summarize(start=min(id), end=max(id) - empty_bar) %>% 
+  rowwise() %>% 
+  mutate(title=mean(c(start, end)))
+
+angle <- 90 - 360 * (base_data$title-0.5)/number_of_bar  
+base_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+grid_data <- base_data
+grid_data$end <- grid_data$end[c(nrow(grid_data), 1:nrow(grid_data)-1)] + 1
+grid_data$start <- grid_data$start - 1
+
+ggplot(genre_combined, aes(x=as.factor(id), y=occurences, fill=region)) +       
+  geom_bar(aes(x=as.factor(id), y=occurences, fill=region), stat="identity", alpha=0.5) +
+  
+  geom_segment(data=grid_data, aes(x = end, y = 200, xend = start, yend = 200), 
+               colour = "grey", alpha=1,size=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 150, xend = start, yend = 150), 
+               colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 100, xend = start, yend = 100), 
+               colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+  geom_segment(data=grid_data, aes(x = end, y = 50, xend = start, yend = 50), 
+               colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+  
+  annotate("text", x = rep(max(genre_combined$id), 4), y = c(50, 100, 150, 200), 
+           label = c("50", "100", "150", "200") ,
+           color="grey", size=3 , angle=0, 
+           fontface="bold", hjust=1) +
+
+  geom_bar(aes(x=as.factor(id), y=occurences, fill=region), stat="identity", alpha=0.5) +
+  ylim(-25, 200) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+  ) +
+  
+  coord_polar() + 
+  geom_text(data=label_data, aes(x=id, y=occurences+10, label=term, hjust=hjust), 
+            color="black", fontface="bold", alpha=0.6, size=2.5, angle= label_data$angle, 
+            inherit.aes = FALSE ) +
+  
+  geom_segment(data=base_data, aes(x = start, y = -1, xend = end, yend = -1), 
+               colour = "black", alpha=0.6, size=0.8, inherit.aes = F) +
+  geom_text(data=base_data, aes(x = title, y = -6, label=region, angle=angle),
+            hjust = c(rep(1, 2), rep(0, 3)), colour = "black", alpha=0.7, size=1.6, fontface="bold", 
+            inherit.aes = FALSE)
+```
+
+# Lollipop Plot: Genre by Collection (Full)
+```{r}
+library(ggplot2)
+library(ggtext)
+
+genre_combined <- rbind(wf_afg2, wf_alb2, wf_leb2, wf_arg2, wf_bar2, wf_ibi2, wf_obi2, 
+                        wf_tal2, wf_mmdh2, wf_dom2, wf_hai2, wf_ind2, wf_les2, wf_mon2, 
+                        wf_nige2, wf_peru2, wf_tim2)
+
+genre_combined$region <- as.factor(genre_combined$region)
+genre_combined$id <- seq(1, nrow(genre_combined))
+
+plus <- 1000
+genre_plot <-
+  genre_combined %>% 
+  mutate(occurences = occurences + plus)
+
+labels <-
+  genre_plot %>%
+  filter(occurences > 2500) %>%
+  mutate(label = term) %>%
+  add_column(
+    x = c(1, 2, 6, 11, 13, 14, 113, 130, 131, 134, 135),
+    y = c(5845, 6006, 9778, 8437, 3193, 3212, 2814, 3716, 3981, 2628, 2628)
+)
+
+main <- ggplot(genre_plot, aes(id, occurences, color = collection)) +
+  geom_segment(aes(x = id, xend = id, y = 0, yend = occurences), size = 0.5) +
+  geom_point(aes(size = occurences)) +
+  scale_y_log10(expand = c(0, 0)) +
+  scale_size(range = c(1, 8), limits = c(plus, max(genre_plot$occurences)), guide = "none") +
+  coord_polar() +
+  geom_richtext(data = labels, aes(x = x, y = y, label = label, color = collection),
+                lineheight = 0.5, size = 3, label.color = NA)
+  # View by Collection
+  # facet_wrap(~ collection, nrow = 3)
+
+main
+```
+
+Genre Data Cleaning
+```{r}
+barbados_new <- barbados
+a <- unlist(strsplit(barbados_new$Genre, split = "[}]"))
+barbados_genre <- data.frame(Genre = unlist(strsplit(a, split = "\\|~\\|")), 
+                             Collection = "Barbados")
+
+ibicaba_new <- brazil_ibicaba
+brazil_ibicaba_genre <- data.frame(Genre = unlist(strsplit(ibicaba_new$Genre, split = "\\|")),
+                                   Collection = "Brazil_Ibicaba")
+
+country <- rbind(afghanistan[c(5, 11)], albania[c(5, 11)], lebanon[c(5, 11)], argentina[c(5, 11)], 
+                 barbados_genre, brazil_ibicaba_genre, brazil_obidos[c(5, 11)], chile[c(5, 11)],
+                 chile_mmdh[c(5, 11)], dominican[c(5, 11)], haiti[c(5, 11)], india[c(5, 11)],
+                 lesotho[c(5, 11)], mongolia[c(5, 11)], nigeria[c(5, 11)], peru[c(5, 11)], 
+                 timor[c(5, 11)], guatemala[c(5, 11)], kenya[c(5, 11)], india_bengal[c(5, 11)],
+                 brazil_imago[c(5, 11)], brazil_diocesan[c(5, 11)])
+
+country_names <- c("Afghanistan", "Albania", "Lebanon", "Argentina", "Barbados",
+                   "Brazil_Ibicaba", "Brazil_Obidos", "Chile_Tallersol", "Chile_MMDH",
+                   "Dominican_Republic", "Haiti", "India", "Lesotho", "Mongolia", "Nigeria",
+                   "Peru", "Timor_Leste", "Guatemala", "Kenya", "India_Bengal",
+                   "Brazil_Imago", "Brazil_Diocesan")
+
+collection_names <- c("Louis and Nancy Dupree", "Albanian Photographic and Graphic Art", 
+                 "Arab Image Foundation Photo Negatives", "Memoria Abierta", 
+                 "Barbados Ephemera", "Ibicaba Farm Records", "Obidos Court Records", 
+                 "Centro Cultural Tallersol", "MMDH", "El Mundo Al Dia", "Haiti", 
+                 "Rajasthan Music", "Ramakatane", "Humun Bichig Newspaper", 
+                 "Ibadan Soundvision", "Archive of Confederacion Campesina del Peru", 
+                 "Fatakulu Language and Culture", "ODHAG_Guatemala", "Bookbunk Batch02",
+                 "Religion and Politics in Modern Bengal (CSSSC)", "Imago Institute",
+                 "boletimdiocesano")
+
+genre_df <- data_frame()
+
+for(i in 1:22){
+  genre_df <- rbind(genre_df, 
+                    data_frame(Genre = names(table(country[which(country[,"Collection"] ==
+                                                                   country_names[i]),]$Genre)), 
+                               Collection = collection_names[i],
+                               Freq = as.numeric(table(country[which(country[,"Collection"] ==
+                                                                       country_names[i]),]$Genre))))
+}
+
+library(dplyr)
+genre_term <- genre_df %>% 
+  group_by(Genre) %>% 
+  summarise(Total = sum(Freq)) 
+
+genre_term
+
+write.csv(genre_term, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/genre_term.csv", 
+          row.names = FALSE)
+
+genre_term_split <- genre_df %>% 
+  arrange(Genre)
+
+sum_genre <- genre_df %>% 
+  group_by(Genre) %>% 
+  mutate(Freq = sum(Freq)) %>% 
+  arrange(Genre)
+
+genre_term_split$Sum_Freq <- sum_genre$Freq
+genre_term_split
+
+write.csv(genre_term_split, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/genre_term_split.csv", 
+          row.names = FALSE)
+```
+
+# Stemming
+```{r}
+library(tm)
+# genre_df$Genre <- str_to_title(genre_df$Genre)
+genre_df$Genre[12] <- "Event Programs"
+genre_df$Genre[89] <- "Deed Registers"
+genre_df$Genre[90] <- "Electric Wiring"
+genre_df$Genre[91] <- "Pictorial Views"
+genre_df$Genre[92] <- "Spines (Book Components)"
+genre_df$Genre[28] <- "Brochures"
+genre_df$Genre[75] <- "Programs (Documents)"
+genre_df$Genre[131] <- "Pamphlet"
+genre_df$Genre <- tolower(genre_df$Genre)
+# genre_df$Genre <- stemDocument(genre_df$Genre)
+genre_stem<- genre_df %>% 
+  group_by(Genre) %>% 
+  summarise(Total = sum(Freq)) 
+
+genre_stem
+
+write.csv(genre_stem, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/genre_stem.csv", 
+          row.names = FALSE)
+```
+
+Subject Data Cleaning
+```{r}
+library(dplyr)
+library(tidyverse)
+
+country <- rbind(afghanistan[c(7, 11, 6)], albania[c(7, 11, 6)], lebanon[c(7, 11, 6)], 
+                 argentina[c(7, 11, 6)], barbados[c(7, 11, 6)], brazil_ibicaba[c(7, 11, 6)], 
+                 brazil_obidos[c(7, 11, 6)], chile[c(7, 11, 6)], chile_mmdh[c(7, 11, 6)], 
+                 dominican[c(7, 11, 6)], haiti[c(7, 11, 6)], india[c(7, 11, 6)], 
+                 lesotho[c(7, 11, 6)], mongolia[c(7, 11, 6)], nigeria[c(7, 11, 6)], 
+                 peru[c(7, 11, 6)], timor[c(7, 11, 6)], guatemala[c(7, 11, 6)], 
+                 kenya[c(7, 11, 6)], india_bengal[c(7, 11, 6)], brazil_imago[c(7, 11, 6)], 
+                 brazil_diocesan[c(7, 11, 6)])
+
+region <- c("Central Asia", "Europe", "Middle East", "Latin America", "Carribean",
+            "Latin America", "Latin America", "Latin America", "Latin America",
+            "Carribean", "Carribean", "South Asia", "Africa", "Central Asia",
+            "Africa", "Latin America", "Southeast Asia", "Carribean", "Africa",
+            "South Asia", "Latin America", "Latin America")
+
+a <- country
+a <- separate_rows(country, Subject, sep="\\|~\\|")
+a <- separate_rows(a, Subject, sep="--")
+a <- separate_rows(a, Subject, sep="\\|")
+
+subject_df <- data.frame()
+for(i in 1:22){
+  # a <- unlist(strsplit(country[which(country[,"Collection"] == country_names[i]),]$Subject, 
+  #                      split = "\\|~\\|"))
+  # a <- unlist(strsplit(a, split = "--"))
+  # a <- unlist(strsplit(a, split = "\\|"))
+  subject_df <- rbind(subject_df,
+                      data_frame(Subject = a[which(a$Collection == country_names[i]),]$Subject,
+                                 Collection = collection_names[i],
+                                 Country = a[which(a$Collection == country_names[i]),]$Collection,
+                                 Region = region[i],
+                                 Type = a[which(a$Collection == country_names[i]),]$Type.typeOfResource))
+}
+
+subject_df
+write.csv(subject_df, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/subject_df.csv", 
+          row.names = FALSE)
+
+subject_term <- subject_df %>% 
+  group_by(Subject) %>% 
+  mutate(Freq = length(Subject)) %>% 
+  ungroup() %>% 
+  distinct()
+
+subject_term <- subject_term[order(subject_term$Subject),]
+subject_term
+
+write.csv(subject_term, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/subject_term.csv", 
+          row.names = FALSE)
+
+subject_term_split <- data_frame()
+
+for(i in 1:22){
+  subject_term_collection <- subject_df %>% 
+    filter(Collection == collection_names[i]) %>% 
+    group_by(Subject) %>% 
+    mutate(Freq = length(Subject)) %>% 
+    distinct()
+  
+  subject_term_split <- rbind(subject_term_split, subject_term_collection)
+}
+
+subject_term_split <- subject_term_split[order(subject_term_split$Subject),]
+subject_term_split$Sum_Freq <- subject_term$Freq
+subject_term_split
+  
+write.csv(subject_term_split, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/subject_term_split.csv", 
+          row.names = FALSE)
+```
+
+# Stemming/Lemmatizing
+```{r}
+# library(tm)
+# library(dplyr)
+# library(textstem)
+# 
+# subject_df_new <- subject_term_split
+# subject_df_new$Subject <- str_to_title(subject_df_new$Subject)
+# subject_df_new$Subject <- lemmatize_words(subject_df_new$Subject)
+# subject_df_new$Subject <- stemDocument(subject_df_new$Subject)
+# 
+# subject_stem <- subject_df_new %>%
+#   group_by(Subject) %>% 
+#   summarise(Freq = length(Subject))
+# 
+# subject_stem
+# 
+# write.csv(subject_stem, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/subject_stem.csv", 
+#           row.names = FALSE)
+```
+
+# Alternative Method
+```{r}
+# stem_df <- all_df
+# stem_df$Subject <- gsub("\\|~\\|", " ", stem_df$Subject)
+# stem_df$Subject <- gsub("--", " ", stem_df$Subject)
+# stem_df$Subject <- gsub("\\|", " ", stem_df$Subject)
+# stem_df$Subject <- stemDocument(stem_df$Subject)
+# 
+# subject_df <- data.frame()
+# 
+# for(i in 1:22){
+#   top <- stem_df %>% filter(Collection == country_names[i])
+#   dtmr <- DocumentTermMatrix(top$Subject,
+#                              control = list(wordLengths = c(4, 20)))
+#   freqr <- colSums(as.matrix(dtmr))
+#   ordr <- order(freqr, decreasing = TRUE)
+#   subject_df <- rbind(subject_df, data.frame(term = names(freqr), 
+#                                              occurrences = freqr,
+#                                              collection = collection_names[i]))
+# }
+# 
+# library(dplyr)
+# subject_term <- subject_df %>% 
+#   group_by(term) %>% 
+#   reframe(Total = sum(occurences))
+# 
+# subject_term
+# 
+# subject_term_split <- subject_df %>% 
+#   arrange(term)
+# 
+# subject_term_split
+```
+
+# Final Method
+```{r}
+subject_corrected <- read.csv("subject_corrected.csv")
+
+# library(quanteda)
+# library(spacyr)
+# subject_parsed <- spacy_parse(subject_corrected$Subject, tag = TRUE)
+# subject_parsed$token <- ifelse(subject_parsed$tag == "NNS",
+#   subject_parsed$lemma,
+#   subject_parsed$token
+# )
+
+library(pacman)
+p_load_gh('hrbrmstr/pluralize')
+p_load(quanteda)
+
+subject_new <- data.frame(Subject = singularize(unlist((subject_corrected$Subject))))
+
+subject_new
+write.csv(subject_new, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/subject_new.csv",
+          row.names = FALSE)
+
+library(dplyr)
+subject_new %>%
+  group_by(Subject) %>%
+  mutate(Freq = length(Subject)) %>%
+  ungroup() %>%
+  distinct()
+```
+
+```{r}
+subject_df_spell <- read.csv("subject_df_spell.csv")
+
+library(pacman)
+p_load_gh('hrbrmstr/pluralize')
+p_load(quanteda)
+
+subject_df_spell$Subject <- singularize(unlist(subject_df_spell$Subject))
+
+subject_term_new <- subject_df_spell %>%
+  group_by(Subject) %>%
+  mutate(Freq = length(Subject)) %>%
+  ungroup() %>%
+  distinct()
+
+subject_term_new <- subject_term_new[order(subject_term_new$Subject),]
+
+subject_term_split_new <- data_frame()
+
+for(i in 1:22){
+  subject_term_collection <- subject_df_spell %>% 
+    filter(Collection == collection_names[i]) %>% 
+    group_by(Subject) %>% 
+    mutate(Freq = length(Subject)) %>% 
+    distinct()
+  
+  subject_term_split_new <- rbind(subject_term_split_new, subject_term_collection)
+}
+
+subject_term_split_new <- subject_term_split_new[order(subject_term_split_new$Subject),]
+subject_term_split_new$Sum_Freq <- subject_term_new$Freq
+subject_term_split_new
+  
+write.csv(subject_term_split_new, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/subject_term_split_new.csv", 
+          row.names = FALSE)
+
+library(dplyr)
+subject_term_new <- subject_term_split_new %>%
+  group_by(Subject) %>%
+  summarise(Sum_Freq = sum(Freq)) %>%
+  ungroup() %>%
+  distinct()
+
+subject_term_new
+write.csv(subject_term_new, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/subject_term_new.csv", 
+          row.names = FALSE)
+```
+
+```{r}
+subject_after <- read.csv("subject_after_further.csv")
+
+library(dplyr)
+subject_after %>%
+  group_by(Subject) %>%
+  summarise(Sum = length(Subject))
+```
+
+# Time Analysis
+```{r}
+# table(date_df$Date.created)
+
+# Extracting last 4 digits: this means for dates with a range, it will extract the most recent year predicted
+
+library(stringr)
+
+which(str_sub(all_df$Date.created, start = -4) == "1-06")
+which(str_sub(all_df$Date.created, start = -4) == "2976")
+which(str_sub(all_df$Date.created, start = -4) == "5-26")
+which(str_sub(all_df$Date.created, start = -4) == "9-17")
+which(str_sub(all_df$Date.created, start = -4) == "920s")
+which(str_sub(all_df$Date.created, start = -4) == "990\t")
+which(str_sub(all_df$Date.created, start = -4) == "June")
+which(str_sub(all_df$Date.created, start = -4) == "uary")
+
+all_df$Date.created[19029] <- "1976"
+all_df$Date.created[4539] <- "1995"
+all_df$Date.created[19019] <- "1982"
+all_df$Date.created[20923] <- "1990"
+all_df$Date.created[3900] <- "1995"
+all_df$Date.created[27839] <- "1976"
+
+# 1920s to 1920
+all_df$Date.created[c(1628, 1752, 2055, 2178, 2279, 2482, 2605, 3032, 3459, 3648, 4064, 4401,
+                      4490, 4625)] <- "1920"
+
+# 2976 to 1976
+all_df$Date.created[c(1504, 1708, 1819, 1930, 2022, 2224, 2245, 2336, 2347, 2448, 2651, 2762,
+                      2773, 2874, 3077, 3088, 3504, 3514, 3941, 4256, 4368, 4570, 4683)] <- "1976"
+
+all_df$Date.created <- str_sub(all_df$Date.created, start = -4)
+date_df <- as.data.frame(table(str_sub(all_df$Date.created, start = -4)))[-1,]
+
+library(ggplot2)
+ggplot(date_df, aes(Var1, Freq)) +
+  geom_bar(stat = "identity") +
+  scale_x_discrete(breaks = seq(1842, 2021, by = 3)) +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("All Collections Date Created")
+```
+
+# Top Word by Year (Description)
+```{r}
+rm_des_all_df <- all_df %>% filter(!is.na(Description.note))
+all_dates <- as.character(sort(as.numeric(unique(rm_des_all_df$Date.created))))
+all_dates <- all_dates[!is.na(all_dates)]
+
+time_f <- function(x){
+  top_words <- rep(NA, length(all_dates))
+  top_words_freq <- rep(NA, length(all_dates))
+  
+  for(i in seq_along(x)){
+    top_time <- rm_des_all_df %>% filter(Date.created == all_dates[i])
+    dtmr_time <- DocumentTermMatrix(top_time$Description.note,
+                                    control = list(wordLengths = c(5, 20)))
+    freqr_time <- colSums(as.matrix(dtmr_time))
+    wf_time <- data.frame(term = names(freqr_time), occurences = freqr_time)
+    top_words[i] <- wf_time[which(wf_time$occurences == max(wf_time$occurences)),]$term
+    top_words_freq[i] <- max(wf_time$occurences)
+  }
+  
+  list(top_words, top_words_freq)
+}
+
+top_word_df <- as.data.frame(list("Date Created" = all_dates, 
+                                  "Top Word" = suppressWarnings(time_f(all_dates))[[1]],
+                                  "Top Word Freq" = suppressWarnings(time_f(all_dates))[[2]]))
+
+top_word_df
+write.csv(top_word_df, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/top_word_df.csv", 
+          row.names = FALSE)
+
+ggplot(top_word_df, aes(Date.Created, Top.Word.Freq)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = ifelse(Top.Word.Freq > 1000, Top.Word,'')), hjust=0.5, vjust=-0.3) +
+  scale_x_discrete(breaks = seq(1850, 2021, by = 3)) +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Top Word Frequency by Year (Description)")
+```
+
+Top Word by Year (Subject)
+```{r}
+rm_sub_all_df <- all_df %>% filter(!is.na(Subject))
+all_dates_sub <- as.character(sort(as.numeric(unique(rm_sub_all_df$Date.created))))
+all_dates_sub <- all_dates_sub[!is.na(all_dates_sub)]
+
+time_f_sub <- function(x){
+  top_words <- rep(NA, length(all_dates_sub))
+  top_words_freq <- rep(NA, length(all_dates_sub))
+  
+  for(i in seq_along(x)){
+    top_time <- rm_sub_all_df %>% filter(Date.created == all_dates_sub[i])
+    dtmr_time <- DocumentTermMatrix(top_time$Subject,
+                                    control = list(wordLengths = c(5, 20)))
+    freqr_time <- colSums(as.matrix(dtmr_time))
+    wf_time <- data.frame(term = names(freqr_time), occurences = freqr_time)
+    top_words[i] <- wf_time[which(wf_time$occurences == max(wf_time$occurences)),]$term
+    top_words_freq[i] <- max(wf_time$occurences)
+  }
+  
+  list(top_words, top_words_freq)
+}
+
+top_word_df_sub <- as.data.frame(list("Date Created" = all_dates_sub, 
+                                      "Top Word" = suppressWarnings(time_f_sub(all_dates_sub))[[1]],
+                                      "Top Word Freq" =
+                                        suppressWarnings(time_f_sub(all_dates_sub))[[2]]))
+
+top_word_df_sub
+write.csv(top_word_df_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/top_word_df_sub.csv", 
+          row.names = FALSE)
+
+ggplot(top_word_df_sub, aes(Date.Created, Top.Word.Freq)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = ifelse(Top.Word.Freq > 1000, Top.Word,'')), hjust=0.5, vjust=-0.3) +
+  scale_x_discrete(breaks = seq(1850, 2021, by = 3)) +
+  theme(axis.text = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Top Word Frequency by Year (Subject)")
+```
+
+# Project Data
+```{r}
+proj <- read.csv("projects.csv", sep = ",")
+proj_topic <- read.csv("cateogy project topics.csv")
+proj_region <- read.csv("category project region.csv")
+proj_new <- read.csv("projects_new.csv")
+
+proj
+proj_topic
+proj_region
+proj_new
+```
+
+```{r}
+region_df <- data_frame(Region = names(table(proj_new$regionName)), Freq = table(proj_new$regionName))
+
+region_df
+write.csv(region_df, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/region_df.csv",
+          row.names = FALSE)
+
+region_df_split <- proj_new %>% 
+  group_by(regionName) %>% 
+  mutate(regionFreq = length(regionName)) %>% 
+  ungroup() %>% 
+  distinct()
+
+region_df_split
+write.csv(region_df_split, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/region_df_split.csv",
+          row.names = FALSE)
+
+topic <- separate_rows(proj_new, meapProjectTopicName, sep = ", ")
+
+topic_df <- data_frame(Topic = names(table(topic$meapProjectTopicName)), 
+                       Freq = table(topic$meapProjectTopicName))
+
+topic_df
+write.csv(topic_df, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/topic_df.csv",
+          row.names = FALSE)
+
+topic_df_split <- topic %>% 
+  group_by(meapProjectTopicName) %>% 
+  mutate(topicFreq = length(meapProjectTopicName)) %>% 
+  ungroup() %>% 
+  distinct()
+
+topic_df_split
+write.csv(topic_df_split, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/topic_df_split.csv",
+          row.names = FALSE)
+```
+
+# Network Analysis
+```{r}
+subject_region <- tibble(Region = subject_df$Region,
+                         Subject = subject_df$Subject) %>% 
+  unnest_tokens(word, Subject) %>% 
+  filter(!word %in% stop_words$word)
+
+library(widyr)
+word_pairs <- subject_region %>% 
+  pairwise_count(word, Region, sort = TRUE)
+
+word_cor <- subject_region %>% 
+  group_by(word) %>% 
+  filter(n() >= 100) %>% 
+  pairwise_cor(word, Region) %>% 
+  filter(!is.na(correlation))
+
+set.seed(123)
+subject_region %>% 
+  group_by(word) %>% 
+  filter(n() >= 100) %>% 
+  pairwise_cor(word, Region) %>% 
+  filter(!is.na(correlation), correlation > .65) %>% 
+  graph_from_data_frame() %>% 
+  ggraph(layout = "fr") + 
+  geom_edge_link(aes(edge_alpha = correlation), show.legend = FALSE) + 
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
+
+subject_region
+```
+
+# McMillan Memorial Clean Up
+```{r}
+# Kenya Leo Newspaper Collection
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Kenya Leo Collection", 
+                                                         "Kenya Leo Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "The Kenya Leo Newspaper Collection", 
+                                                         "Kenya Leo Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Kenya Leo Newspapers Collection", 
+                                                         "Kenya Leo Newspaper Collection")
+
+# Kenya Times Newspaper Collection
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Kenya Times Newspapers Collection", 
+                                                         "Kenya Times Newspaper Collection")
+
+# Kenya Weekly News Newspaper Collection
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Kenya Weekly News Collection", 
+                                                         "Kenya Weekly News Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "The Kenya Weekly News Collection", 
+                                                         "Kenya Weekly News Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Kenya weekly news Newspaper Collection.", 
+                                                         "Kenya Weekly News Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Kenya Weekly Newspaper Collection", 
+                                                         "Kenya Weekly News Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Kenya weekly news Newspaper Collection", 
+                                                         "Kenya Weekly News Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Kenya weekly News Newspaper Collection", 
+                                                         "Kenya Weekly News Newspaper Collection")
+
+# The Nairobi Times Newspaper Collection
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Nairobi Times Collection", 
+                                                         "The Nairobi Times Newspaper Collection")
+
+# Sunday Post Newspaper Collection
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Sunday Post Collection", 
+                                                         "Sunday Post Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "The Sunday Post Newspaper Collection", 
+                                                         "Sunday Post Newspaper Collection")
+
+# Sunday Times Newspaper Collection
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Sunday Times Collection", 
+                                                         "Sunday Times Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "The Sunday Times Newspaper Collection", 
+                                                         "Sunday Times Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Sunday Times Newspaper Collection.", 
+                                                         "Sunday Times Newspaper Collection")
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "Sunday Times Newspapers Collection", 
+                                                         "Sunday Times Newspaper Collection")
+
+# Taifa Weekly Newspaper Collection
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "The Taifa Weekly Newspaper Collection", 
+                                                         "Taifa Weekly Newspaper Collection")
+
+# Target Newspaper Collection
+mcmillan_memorial$Collection.physical <- str_replace_all(mcmillan_memorial$Collection.physical, 
+                                                         "The Target Newspaper Collection", 
+                                                         "Target Newspaper Collection")
+
+write.csv(mcmillan_memorial, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/mcmillan_memorial.csv",
+          row.names = FALSE)
+```
+
+# Subject Topic Clean Up
+```{r}
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(cleanNLP)
+library(pluralize)
+
+add_freq <- function(data){
+  data %>% 
+    group_by(original) %>% 
+    mutate(Freq = length(original)) %>% 
+    ungroup() %>% 
+    distinct()
+}
+
+subject_process <- function(data){
+  result_df <- data %>%
+    separate_rows(Subject.topic, sep = "\\|~\\|") %>% 
+    separate_rows(Subject.topic, sep = "\\| ") %>% 
+    separate_rows(Subject.topic, sep = ", ") %>% 
+    separate_rows(Subject.topic, sep = ",") %>% 
+    separate_rows(Subject.topic, sep = "--") %>% 
+    separate_rows(Subject.topic, sep = "\\|")
+  
+  result_df$Subject.topic <- gsub("~", "", result_df$Subject.topic)
+  result_df$Subject.topic <- gsub("\\s{2,}", "", result_df$Subject.topic)
+  result_df$Subject.topic <- trimws(result_df$Subject.topic, "both")
+  
+  original_df <- data.frame(original = sort(result_df$Subject.topic))
+  df <- add_freq(original_df)
+  
+  original <- sort(unique(result_df$Subject.topic))
+
+  subject <- tolower(original)
+  subject <- str_replace(subject, "^(\\S)", function(match) toupper(match))
+
+  cnlp_init_udpipe()
+  lemma_upos <- cnlp_annotate(input = subject)
+  proper_nouns <- lemma_upos$token[which(lemma_upos$token$upos == "PROPN"),]$token
+
+  propn_cap <- function(subject, proper_nouns) {
+    if (any(str_detect(subject, proper_nouns))) {
+      subject <- str_to_title(subject)
+    } else {
+      subject <- pluralize(subject)
+    }
+    return(subject)
+  }
+
+  subject <- sort(unlist(lapply(subject, propn_cap, proper_nouns = proper_nouns)))
+  
+  data.frame(df, subject)
+}
+
+subject_process_no_propn <- function(data){
+  result_df <- data %>%
+    separate_rows(Subject.topic, sep = "\\|~\\|") %>% 
+    separate_rows(Subject.topic, sep = "\\| ") %>% 
+    separate_rows(Subject.topic, sep = ", ") %>% 
+    separate_rows(Subject.topic, sep = ",") %>% 
+    separate_rows(Subject.topic, sep = "--") %>% 
+    separate_rows(Subject.topic, sep = "\\|")
+  
+  result_df$Subject.topic <- gsub("~", "", result_df$Subject.topic)
+  result_df$Subject.topic <- gsub("\\s{2,}", "", result_df$Subject.topic)
+  result_df$Subject.topic <- trimws(result_df$Subject.topic, "left")
+
+  original_df <- data.frame(original = sort(result_df$Subject.topic))
+  df <- add_freq(original_df)
+  
+  original <- sort(unique(result_df$Subject.topic))
+  
+  subject <- tolower(original)
+  subject <- str_replace(subject, "^(\\S)", function(match) toupper(match))
+  subject <- pluralize(subject)
+  
+  data.frame(df, subject)
+}
+
+subject_process_no_plural <- function(data){
+  result_df <- data %>%
+    separate_rows(Subject.topic, sep = "\\|~\\|") %>% 
+    separate_rows(Subject.topic, sep = "\\| ") %>% 
+    separate_rows(Subject.topic, sep = ", ") %>% 
+    separate_rows(Subject.topic, sep = ",") %>% 
+    separate_rows(Subject.topic, sep = "--") %>% 
+    separate_rows(Subject.topic, sep = "\\|")
+  
+  result_df$Subject.topic <- gsub("~", "", result_df$Subject.topic)
+  result_df$Subject.topic <- gsub("\\s{2,}", "", result_df$Subject.topic)
+  result_df$Subject.topic <- trimws(result_df$Subject.topic, "left")
+
+  original_df <- data.frame(original = sort(result_df$Subject.topic))
+  df <- add_freq(original_df)
+  
+  original <- sort(unique(result_df$Subject.topic))
+  
+  subject <- tolower(original)
+  subject <- str_replace(subject, "^(\\S)", function(match) toupper(match))
+  
+  data.frame(df, subject)
+}
+```
+
+```{r}
+elmundoaldia <- read.csv("Copy of elmundoaldia - elmundoaldia-works copy.csv")
+photo_surprise <- read.csv("Copy of The Photo Surprise Archive of Photo Jack  - aifphotojack-works.csv")
+meap_haiti <- read.csv("Copy of MEAPHaiti - haiti-works.csv")
+mcmillan_memorial <- read.csv("Copy of McMillan Memorial Library (Nairobi, Kenya) Metadata - bookbunk-works.csv")
+imago_institute <- read.csv("Copy of Imago Institute - imago-works copy.csv")
+ramakatane <- read.csv("Copy of Ramakatane Collection - ramakatane-metadata.csv")
+ibadan_complex <- read.csv("Copy of ibadan-soundvision - ibadansoundvision-complex-works.csv")
+ibadan_audio <- read.csv("Copy of ibadan-soundvision - ibadansoundvision-audio.csv")
+ibadan_video <- read.csv("Copy of ibadan-soundvision - ibadansoundvision-video.csv")
+barbados <- read.csv("Copy of Barbados Ephemera Collection - barbados-works.csv.csv")
+humun_bichig <- read.csv("Copy of Humun Bichig Newspaper - mongolia-works.csv")
+dupree <- read.csv("Copy of Louis Dupree and Nancy Dupree Collection - dupree-works.csv")
+albanian <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-simple.csv")
+tallersol <- read.csv("Copy of Centro Cultural Tallersol (Chile) - cct-simple-works.csv")
+obidos <- read.csv("Copy of Obidos Court Records metadata - obidos-works.csv")
+ibicaba <- read.csv("Copy of Ibicaba Farm Records - ibicaba-works.csv")
+memoria_abierta <- read.csv("Copy of memoria-abierta - memoria-works.csv")
+aif_negatives <- read.csv("Copy of Arab Image Foundation Photo Negatives - aifnegatives-works.csv")
+aif_simple <- read.csv("Copy of Arab Image Foundation Photo Negatives - aifnegatives-simple.csv")
+rajasthan <- read.csv("Copy of rajasthanmusic-metadata - rajasthanmusic-metadata.csv")
+fatakulu <- read.csv("Copy of Fataluku Language and Culture - fatalukulanguage-complex.csv")
+campesina <- read.csv("Copy of Archive of Confederación Campesina del Perú (CCP) - ccp-works.csv")
+mmdh <- read.csv("Copy of MMDH - mmdh-works.csv")
+
+haiti_complex <- read.csv("Copy of MEAPHaiti - haiti-works-complex.csv")
+albanian_complex <- read.csv("Copy of Albanian Photographic and Graphic Art Collection - AQSHF - aqshf-metadata-complex.csv")
+tallersol_complex <- read.csv("Copy of Centro Cultural Tallersol (Chile) - cct-complex-works.csv")
+mmdh_video <- read.csv("Copy of MMDH - mmdh-video.csv")
+
+names(albanian_complex)[names(albanian_complex) == 'Subject'] <- 'Subject.topic'
+names(tallersol_complex)[names(tallersol_complex) == 'Subject'] <- 'Subject.topic'
+names(mmdh_video)[names(mmdh_video) == 'Subject'] <- 'Subject.topic'
+
+elmundoaldia_sub <- subject_process(elmundoaldia)
+photo_surprise_sub <- subject_process_no_propn(photo_surprise)
+meap_haiti_sub <- subject_process(meap_haiti)
+mcmillan_memorial_sub <- subject_process(mcmillan_memorial)
+# imago_institute_sub <- subject_process(imago_institute) # no subject
+ramakatane_sub <- subject_process_no_plural(ramakatane)
+ibadan_complex_sub <- subject_process_no_plural(ibadan_complex)
+ibadan_audio_sub <- subject_process_no_plural(ibadan_audio)
+ibadan_video_sub <- subject_process_no_propn(ibadan_video)
+barbados_sub <- subject_process(barbados)
+humun_bichig_sub <- subject_process_no_plural(humun_bichig)
+dupree_sub <- subject_process(dupree)
+albanian_sub <- subject_process(albanian)
+tallersol_sub <- subject_process(tallersol)
+obidos_sub <- subject_process(obidos)
+ibicaba_sub <- subject_process(ibicaba)
+memoria_abierta_sub <- subject_process(memoria_abierta)
+aif_negatives_sub <- subject_process(aif_negatives)
+aif_simple_sub <- subject_process_no_plural(aif_simple)
+rajasthan_sub <- subject_process(rajasthan)
+fatakulu_sub <- subject_process_no_plural(fatakulu)
+campesina_sub <- subject_process(campesina)
+mmdh_sub <- subject_process(mmdh)
+
+haiti_complex_sub <- subject_process_no_plural(haiti_complex)
+albanian_complex_sub <- subject_process_no_plural(albanian_complex)
+tallersol_complex_sub <- subject_process_no_plural(tallersol_complex)
+mmdh_video_sub <- subject_process_no_plural(mmdh_video)
+
+write.csv(elmundoaldia_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/elmundoaldia_sub.csv",
+          row.names = FALSE)
+write.csv(photo_surprise_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/photo_surprise_sub.csv",
+          row.names = FALSE)
+write.csv(meap_haiti_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/meap_haiti_sub.csv",
+          row.names = FALSE)
+write.csv(mcmillan_memorial_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/mcmillan_memorial_sub.csv",
+          row.names = FALSE)
+# write.csv(imago_institute_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/imago_institute_sub.csv",
+#           row.names = FALSE)
+write.csv(ramakatane_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/ramakatane_sub.csv",
+          row.names = FALSE)
+write.csv(ibadan_complex_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/ibadan_complex_sub.csv",
+          row.names = FALSE)
+write.csv(ibadan_audio_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/ibadan_audio_sub.csv",
+          row.names = FALSE)
+write.csv(ibadan_video_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/ibadan_video_sub.csv",
+          row.names = FALSE)
+write.csv(barbados_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/barbados_sub.csv",
+          row.names = FALSE)
+write.csv(humun_bichig_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/humun_bichig_sub.csv",
+          row.names = FALSE)
+write.csv(dupree_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/dupree_sub.csv",
+          row.names = FALSE)
+write.csv(albanian_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/albanian_sub.csv",
+          row.names = FALSE)
+write.csv(tallersol_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/tallersol_sub.csv",
+          row.names = FALSE)
+write.csv(obidos_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/obidos_sub.csv",
+          row.names = FALSE)
+write.csv(ibicaba_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/ibicaba_sub.csv",
+          row.names = FALSE)
+write.csv(memoria_abierta_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/memoria_abierta_sub.csv",
+          row.names = FALSE)
+write.csv(aif_negatives_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/aif_negatives_sub.csv",
+          row.names = FALSE)
+write.csv(aif_simple_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/aif_simple_sub.csv",
+          row.names = FALSE)
+write.csv(rajasthan_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/rajasthan_sub.csv",
+          row.names = FALSE)
+write.csv(fatakulu_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/fatakulu_sub.csv",
+          row.names = FALSE)
+write.csv(campesina_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/campesina_sub.csv",
+          row.names = FALSE)
+write.csv(mmdh_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/mmdh_sub.csv",
+          row.names = FALSE)
+
+write.csv(haiti_complex_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/haiti_complex_sub.csv",
+          row.names = FALSE)
+write.csv(albanian_complex_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/albanian_complex_sub.csv",
+          row.names = FALSE)
+write.csv(tallersol_complex_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/tallersol_complex_sub.csv",
+          row.names = FALSE)
+write.csv(mmdh_video_sub, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/mmdh_video_sub.csv",
+          row.names = FALSE)
+```
+
+# Final Edits
+```{r}
+replace_terms <- function(terms, vocabulary) {
+  split_terms <- strsplit(unlist(terms), "|~|", fixed = TRUE)
+  
+  lapply(split_terms, function(terms_list) {
+    replaced_list <- ifelse(terms_list %in% vocabulary$Subject.topic, 
+                            vocabulary$Subject.hand[match(terms_list, vocabulary$Subject.topic)], 
+                            terms_list)
+    return(paste(replaced_list, collapse = "|~|"))
+  })
+}
+```
+
+```{r}
+elmundoaldia_edit <- read.csv("elmundoaldia_edit.csv")
+elmundoaldia_edit$Subject.hand <- ifelse(elmundoaldia_edit$Subject.hand == "", 
+                                  elmundoaldia_edit$Subject.new, 
+                                  elmundoaldia_edit$Subject.hand)
+elmundoaldia$Subject.topic <- replace_terms(elmundoaldia$Subject.topic, elmundoaldia_edit)
+elmundoaldia_final <- data.frame("Subject.new" = unlist(elmundoaldia$Subject.topic))
+write.csv(elmundoaldia_final, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/elmundoaldia_final.csv",
+          row.names = FALSE)
+
+haiti_edit <- read.csv("haiti_edit.csv")
+haiti_edit$Subject.hand <- ifelse(haiti_edit$Subject.hand == "", 
+                                  haiti_edit$Subject.new, 
+                                  haiti_edit$Subject.hand)
+meap_haiti$Subject.topic <- replace_terms(meap_haiti$Subject.topic, haiti_edit)
+haiti_final <- data.frame("Subject.new" = unlist(meap_haiti$Subject.topic))
+write.csv(haiti_final, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/haiti_final.csv",
+          row.names = FALSE)
+
+ramakatane_edit <- read.csv("ramakatane_edit.csv")
+ramakatane_edit$Subject.hand <- ifelse(ramakatane_edit$Subject.hand == "" |
+                                         is.na(ramakatane_edit$Subject.hand), 
+                                       ramakatane_edit$Subject.new, 
+                                       ramakatane_edit$Subject.hand)
+ramakatane$Subject.topic <- replace_terms(ramakatane$Subject.topic, ramakatane_edit)
+ramakatane_final <- data.frame("Subject.new" = unlist(ramakatane$Subject.topic))
+write.csv(ramakatane_final, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/ramakatane_final.csv",
+          row.names = FALSE)
+
+ibadan_complex_edit <- read.csv("ibadan_complex_edit.csv")
+ibadan_complex_edit$Subject.hand <- ifelse(ibadan_complex_edit$Subject.hand == "" |
+                                         is.na(ibadan_complex_edit$Subject.hand), 
+                                       ibadan_complex_edit$Subject.new, 
+                                       ibadan_complex_edit$Subject.hand)
+ibadan_complex$Subject.topic <- replace_terms(ibadan_complex$Subject.topic, ibadan_complex_edit)
+ibadan_complex_final <- data.frame("Subject.new" = unlist(ibadan_complex$Subject.topic))
+write.csv(ibadan_complex_final, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/ibadan_complex_final.csv",
+          row.names = FALSE)
+
+ibadan_video_edit<- read.csv("ibadan_video_edit.csv")
+ibadan_video_edit$Subject.hand <- ifelse(ibadan_video_edit$Subject.hand == "" |
+                                         is.na(ibadan_video_edit$Subject.hand), 
+                                       ibadan_video_edit$Subject.new, 
+                                       ibadan_video_edit$Subject.hand)
+ibadan_video$Subject.topic <- replace_terms(ibadan_video$Subject.topic, ibadan_video_edit)
+ibadan_video_final <- data.frame("Subject.new" = unlist(ibadan_video$Subject.topic))
+write.csv(ibadan_video_final, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/ibadan_video_final.csv",
+          row.names = FALSE)
+
+humun_bichig_edit <- read.csv("humun_bichig_edit.csv")
+humun_bichig_edit$Subject.hand <- ifelse(humun_bichig_edit$Subject.hand == "" |
+                                         is.na(humun_bichig_edit$Subject.hand), 
+                                       humun_bichig_edit$Subject.new, 
+                                       humun_bichig_edit$Subject.hand)
+humun_bichig$Subject.topic <- replace_terms(humun_bichig$Subject.topic, humun_bichig_edit)
+humun_bichig_final <- data.frame("Subject.new" = unlist(humun_bichig$Subject.topic))
+write.csv(humun_bichig_final, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/humun_bichig_final.csv",
+          row.names = FALSE)
+
+fatakulu_edit <- read.csv("fatakulu_edit.csv")
+fatakulu_edit$Subject.hand <- ifelse(fatakulu_edit$Subject.hand == "" |
+                                         is.na(fatakulu_edit$Subject.hand), 
+                                       fatakulu_edit$Subject.new, 
+                                       fatakulu_edit$Subject.hand)
+fatakulu$Subject.topic <- replace_terms(fatakulu$Subject.topic, fatakulu_edit)
+fatakulu_final <- data.frame("Subject.new" = unlist(fatakulu$Subject.topic))
+write.csv(fatakulu_final, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/fatakulu_final.csv",
+          row.names = FALSE)
+
+tallersol_edit <- read.csv("tallersol_edit.csv")
+tallersol_edit$Subject.hand <- ifelse(tallersol_edit$Subject.hand == "" |
+                                         is.na(tallersol_edit$Subject.hand), 
+                                       tallersol_edit$Subject.new, 
+                                       tallersol_edit$Subject.hand)
+tallersol$Subject.topic <- replace_terms(tallersol$Subject.topic, tallersol_edit)
+tallersol_final <- data.frame("Subject.new" = unlist(tallersol$Subject.topic))
+write.csv(tallersol_final, "/Users/ShiyuMurashima/Desktop/MEAP-Data-Lab/tallersol_final.csv",
+          row.names = FALSE)
+```
+
+Next Steps:
+- Improve topic modeling (using BERT on Python)
